@@ -78,50 +78,41 @@ Example of structure definition - Decision-making phase
 
 
 ###
-Keyboard detection requirements:
+Keyboard Detection Requirements:
 
-1.  Must be non-blocking (should not interrupt or freeze other processes)
-2.  Must accurately measure key press timing (precise timestamp for each key event)
-3.  Must be precise and reliable (suitable for experimental timing)
+- Non-blocking: Must not freeze or interrupt other processes.
+- Accurate timing: Must log precise timestamps for each key event.
+- Experimental precision: Must be reliable for behavioral experiments.
 
-Ideas: 
+Keyboard Detection Methods
+1. Callback Function with extern library (https://discourse.psychopy.org/t/gui-controls-with-callback-functions/2439)
+How it works:
+Code reacts automatically to key events (e.g., key press), without manual polling—useful for GUIs or asynchronous tasks.
 
-1. Polling the keyboard in the main experiment loop is non-blocking:
-   the loop continuously checks for key presses each frame,
-   but the rest of the code (display, timers, data recording) keeps running at the same time.
-   Nothing freezes while waiting for a key press.
-   Limits:
-   Polling only detects events during each loop iteration, so very brief or simultaneous key presses might be missed;
-   it can increase CPU usage and depends on the program’s focus and timing.
-   In effort production phase, fast tapping cannot be detected. 
+Limits:
+– Less precise timing, can suffer from OS/busy queue delays
+– Harder to synchronize with experiment events
+– Not compatible with precise frame timing in PsychoPy
 
-   pseudo-code : 
+2. Polling in Main Experiment Loop
+How it works:
+The main loop checks for key events each frame, while all other processes (display, timers, data) continue to run.
 
-   WHILE (elapsed time < timeout):
-    // 1. Draw and update stimuli
-    Draw stimuli (if needed)
-    Update the display (flip window)
+Limits:
+– Can miss extremely brief or simultaneous key presses (rare at human speeds)
+– Slightly higher CPU usage
+– Window must remain focused
 
-    // 2. Poll keyboard for new key events this frame
-    Get list of key events from keyboard
-    FOR each event in key events:
-        IF event is key press ("KEYDOWN"):
-            Record the time of key press for this key
-            Print which key was pressed and when
-        ELSE IF event is key release ("KEYUP"):
-            Record the time of key release for this key
-            Print which key was released and when
-            IF key was previously pressed:
-                Calculate duration as (release time - press time)
-                Print how long the key was held
+3. Global Event Key (PsychoPy) (https://www.psychopy.org/coder/globalKeys.html)
+How it works:
+Assign a function to a specific key (or key combination).
+The function is called automatically when that key is pressed, integrated with PsychoPy’s experiment loop (synchronized with win.flip() and core.wait()).
 
-    // 3. (Optional) Do other operations, such as check sensors or update data
-    END WHILE
+Limits:
+– Only detects key presses (KEYDOWN) for the keyboard—does not detect key releases (KEYUP) (I'm searching there is another solution to detect keyup)
+– Cannot measure key hold duration for the keyboard
+– For the mouse, press and release events (and durations) are available via getPressed()
 
-    
+Comparison:
+More reliable than standard GUI callbacks (Tkinter, PyQt, etc.) because it is designed to be fully compatible and synchronized with PsychoPy’s experimental timing.
 
-2. A callback function lets the code automatically react to events (like a key press) 
-   without constantly checking for them—ideal  for GUI apps or when asynchronous response is needed.
-   Limits:
-   Callbacks are less precise for timing, can introduce unpredictable delays (if the OS queue is busy), and are harder to synchronize with experimental events compared to polling in a controlled main loop.
-   Can not be synchronized with Psychopy. 
