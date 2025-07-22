@@ -1,6 +1,7 @@
 from psychopy import core, visual, event
 import config
 
+""""
 def decision_phase():
 
     # Screen of the effort and the gain
@@ -27,7 +28,7 @@ def decision_phase():
         result["dec_result"] = key;
 
     core.wait(DUR_POST_DECISION);
-    
+""
 
     
         
