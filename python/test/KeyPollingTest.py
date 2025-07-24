@@ -9,16 +9,16 @@ class FakeEvent:
         self.pressed_keys = set()
 
     def reset(self):
-        # Resets the virtual time and key press states
+        # Reset the virtual time and key press states
         self.time = 0.0
         self.pressed_keys.clear()
 
     def advance_time(self, delta):
-        # Advances virtual time by delta seconds
+        # Advance the virtual time by delta seconds
         self.time += delta
 
     def getKeys(self, keyList=None, timeStamped=None):
-        # Checks if any keys are pressed exactly at the current virtual time
+        # Check if any keys are pressed exactly at the current virtual time
         pressed_now = []
         for k, t_down, _ in self.schedule:
             if abs(self.time - t_down) < 0.001 and k not in self.pressed_keys:
@@ -27,7 +27,7 @@ class FakeEvent:
         return pressed_now
 
     def isKeyDown(self, k):
-        # Checks if a given key is currently pressed at the virtual time
+        # Check if a given key is currently pressed at the virtual time
         for k0, t_down, t_up in self.schedule:
             if k0 == k and t_down <= self.time < t_up:
                 return True
@@ -37,6 +37,7 @@ def key_detector_psychopy_fake(target_keys, t_limit, fake_event, time_step=0.001
     """Detects key presses within a simulated time window using virtual time."""
     elapsed = 0.0
     while elapsed < t_limit:
+        # Get key events at the current simulated time
         keys = fake_event.getKeys(keyList=target_keys + ['escape'], timeStamped=None)
         if keys:
             k, t_down = keys[0]
@@ -46,7 +47,7 @@ def key_detector_psychopy_fake(target_keys, t_limit, fake_event, time_step=0.001
             t_start = t_down
             current_key = k
 
-            # Find release time (t_up) for the current key event
+            # Find the release time (t_up) for the current key event
             t_up = next((t_u for k_sched, t_d, t_u in fake_event.schedule
                          if k_sched == current_key and t_d == t_start), None)
 
