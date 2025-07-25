@@ -86,6 +86,7 @@ Keyboard Detection Requirements:
 
 Keyboard Detection Methods
 1. Callback Function with extern library (https://discourse.psychopy.org/t/gui-controls-with-callback-functions/2439)
+Pynput
 How it works:
 Code reacts automatically to key events (e.g., key press), without manual polling—useful for GUIs or asynchronous tasks.
 
@@ -94,7 +95,7 @@ Limits:
 – Harder to synchronize with experiment events
 – Not compatible with precise frame timing in PsychoPy
 
-2. Polling in Main Experiment Loop
+2. Polling in Main Experiment Loop with IOHub
 How it works:
 The main loop checks for key events each frame, while all other processes (display, timers, data) continue to run.
 
@@ -115,4 +116,18 @@ Limits:
 
 Comparison:
 More reliable than standard GUI callbacks (Tkinter, PyQt, etc.) because it is designed to be fully compatible and synchronized with PsychoPy’s experimental timing.
+
+Tests results 
+
+1. IOHub Polling (in PsychoPy)
+
+   1.1 Test 1 (Simulation): Randomized key-press schedule via a unittest; showed that a polling interval of ≤ 5 ms yields a timestamp delta of < 5 ms for human tapping rates.
+   1.2 Test 2 (Hardware): Real-world tapping with IOHub in PsychoPy; confirmed excellent tracking accuracy.
+
+2. pynput Callbacks
+
+   2.1 Test 1 (Logic): Simulated key-press/un-press sequences; callback-driven detection worked perfectly.
+   2.2Test 2 (Comparison vs. Global Key Event): High-frequency tapping in PsychoPy vs. OS-level global events; no lost events, and delays were only marginally above the “true” global event times.
+
+
 

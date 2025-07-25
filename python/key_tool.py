@@ -63,6 +63,6 @@ def key_detector_psychopy(target_keys, t_limit, win):
                     t_up = clock.getTime()
                     return current_key, t_up - t_start
                 core.wait(0.01)
-                
+
         core.wait(0.01)
     return None, None
