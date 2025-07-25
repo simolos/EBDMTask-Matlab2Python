@@ -1,40 +1,42 @@
 from pynput import keyboard
 import time
-from datetime import datetime
 
-events = []
-t0 = time.time()  # Reference clock at start
+# ——————————————————————————————————————————————————————
+# CONSTANTS
+START_TIME = time.time()  # reference clock at start
+# ——————————————————————————————————————————————————————
+
+events = []  # will store tuples of the form ('down'/'up', key, t_rel)
 
 def on_press(key):
-    try:
-        k = key.char if hasattr(key, 'char') else str(key)
-    except AttributeError:
-        k = str(key)
-    t = time.time()
-    t_rel = t - t0  # Relative time since start
-    t_str = datetime.fromtimestamp(t).strftime('%H:%M:%S.%f')[:-3]
-    print(f"[pynput] Key DOWN: {k} at {t_str} (relative: {t_rel:.3f}s)")
-    events.append(('down', k, t, t_rel, t_str))
+    """
+    Callback invoked on key press.  
+    Records relative timestamp since START_TIME.
+    """
+    t_rel = time.time() - START_TIME
+    events.append(('down', key, t_rel))
+    # debug print
+    print(f"[pynput] DOWN {key} @ {t_rel:.4f}s")
 
 def on_release(key):
-    try:
-        k = key.char if hasattr(key, 'char') else str(key)
-    except AttributeError:
-        k = str(key)
-    t = time.time()
-    t_rel = t - t0
-    t_str = datetime.fromtimestamp(t).strftime('%H:%M:%S.%f')[:-3]
-    print(f"[pynput] Key UP  : {k} at {t_str} (relative: {t_rel:.3f}s)")
-    events.append(('up', k, t, t_rel, t_str))
-    if k in ['Key.esc', 'esc']:
-        print("Quit (esc) pressed.")
-        return False  # Stop listener on escape
+    """
+    Callback invoked on key release.  
+    Records relative timestamp and stops listener on ESC.
+    """
+    t_rel = time.time() - START_TIME
+    events.append(('up', key, t_rel))
+    print(f"[pynput] UP   {key} @ {t_rel:.4f}s")
+    if key == keyboard.Key.esc:
+        # stop the listener
+        return False
 
-print("Press any key (ESC to quit)...")
-with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-    listener.join()
+if __name__ == '__main__':
+    # launch the listener (blocking) that calls our callbacks
+    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
 
-# Readable summary
-print("\nSummary of recorded events:")
-for ev in events:
-    print(f"{ev[0].upper():<4} {ev[1]:<10} | {ev[4]} | rel {ev[3]:.3f}s")
+    # once stopped, print a summary of all captured events
+    print("\nSummary of recorded events:")
+    for evtype, key, t in events:
+        print(f"{evtype.upper():<4} {key:<8} | {t:.4f}s")
+
