@@ -1,10 +1,10 @@
-# English comment: simple WebSocket server with FastAPI
+# simple WebSocket server with FastAPI
 from fastapi import FastAPI, WebSocket
 import uvicorn, json
 
 app = FastAPI()
 
-# English comment: list to stocker les messages de la session en cours
+# list to stocker les messages de la session en cours
 events = []
 
 @app.websocket("/ws")

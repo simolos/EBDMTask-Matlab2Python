@@ -1,16 +1,16 @@
-# English comment: simple WebSocket client to test the server
+# simple WebSocket client to test the server
 import asyncio
 import websockets
 
 async def test():
     uri = "ws://127.0.0.1:8000/ws"
-    # English comment: connect to the WebSocket server
+    # connect to the WebSocket server
     async with websockets.connect(uri) as ws:
         for i in range(5):
             msg = f"test {i}"
-            # English comment: send a text message
+            #  send a text message
             await ws.send(msg)
-            print("Envoyé:", msg)
+            print("Sent:", msg)
             await asyncio.sleep(1)
 
 if __name__ == "__main__":
