@@ -206,16 +206,21 @@ class Screens:
         return elems
 
     def _create_reward_buffer(self, rew_t, effort_level):
+        rect = visual.Rect(self.win, width=self.rect_w, height=self.rect_h, pos=(0,0), lineColor=self.BLACK, lineWidth=self.cross_thickness)
         bar_y = (effort_level-0.5)*self.rect_h
         rew_text = f"{rew_t} cents"
         reward_label = visual.TextStim(self.win, text=rew_text, pos=(self.rect_w*1.5, bar_y), height=self.sz, color=self.BLACK)
-        return [reward_label]
+        return [rect, reward_label]
     
-    def _create_bar_dynamic_buffer(self, effort_level):
+    def _create_bar_buffer(self, effort_level):
         bar_y = (effort_level-0.5)*self.rect_h
-        rect = visual.Rect(self.win, width=self.rect_w, height=self.rect_h, pos=(0,0), lineColor=self.BLACK, lineWidth=self.cross_thickness)
         effort_bar = visual.Rect(self.win, width=self.rect_w*1.2, height=self.rect_h*0.02, pos=(0, bar_y), fillColor=self.DARK_GREY, lineColor=self.BLACK, lineWidth=self.cross_thickness)
-        return [rect, effort_bar]
+        return [effort_bar]
+
+    def _create_cursor_dynamic_buffer(self, cursor):
+        bar_y = (cursor-0.5)*self.rect_h
+        effort_bar = visual.Rect(self.win, width=self.rect_w*1.2, height=self.rect_h*0.005, pos=(0, bar_y), fillColor=self.BLACK, lineColor=self.BLACK, lineWidth=self.cross_thickness/3)
+        return [effort_bar]
 
 
 

@@ -14,6 +14,10 @@ try:
 except ImportError:
     IOHUB_AVAILABLE = False
 
+#=======CONSTANTS========
+KEY_PRESS = 22
+KEY_RELEASE = 23
+#========================
 
 def init_keyboard(use_iohub: bool = True, use_hub: bool = False) -> Tuple[Optional[object], Optional[object]]:
     """
@@ -75,22 +79,23 @@ def wait_for_keys(
     """
     clock = core.Clock()
     end_time = clock.getTime() + timeout
+    start_time = clock.getTime()
 
     # Use IOHub keyboard events if available
     if io and kb:
         press_time = None
         while clock.getTime() < end_time:
             for ev in kb.getEvents():
-                if ev.key == 'escape' and ev.type == ev.KEYBOARD_PRESS:
+                if ev.key == 'escape' and ev.type == KEY_PRESS:
                     win.close()
                     core.quit()
                     return None, None, None
-                if ev.key in keys and ev.type == ev.KEYBOARD_PRESS:
-                    press_time = ev.time
-                    return ev.key, ev.time, None
-                elif ev.key in keys and ev.type == ev.KEYBOARD_RELEASE and press_time is not None:
+                if ev.key in keys and ev.type == KEY_PRESS and press_time is None:
+                    press_time = clock.getTime() 
+#                   return ev.key, ev.time, None
+                elif ev.key in keys and ev.type == KEY_RELEASE and press_time is not None:
                     rt = press_time
-                    duration = ev.time - press_time
+                    duration = clock.getTime() - press_time
                     logging.debug(f"Key {ev.key}: rt={rt:.4f}, dur={duration:.4f}")
                     return ev.key, rt, duration
             core.wait(0.001)
@@ -116,7 +121,50 @@ def poll_keys(kb: Optional[object], io: Optional[object]) -> List[object]:
     Returns:
         List of event objects.
     """
-    
+
     if io and kb:
         return kb.getEvents()
     return event.getKeys()
+
+"""
+if __name__ == "__main__":
+    # Create a PsychoPy window for event capture
+    win = visual.Window(
+        size=(800, 600),
+        color=[0, 0, 0],
+        units='pix',
+        fullscr=False
+    )
+
+    # Initialize keyboard (fallback to PsychoPy event module)
+    kb, io = init_keyboard(use_iohub=True, use_hub=True)
+    
+        # Display instructions
+    instructions = visual.TextStim(
+        win,
+        text="Press one of the keys ['a', 'b', 'escape'] within 5 seconds...",
+        color=[1, 1, 1]
+    )
+    instructions.draw()
+    win.flip()
+
+    key, rt, duration = wait_for_keys(
+        keys=['a', 'b', 'escape'],
+        timeout=10.0,
+        kb=kb,
+        io=io
+    )
+
+    # Close window before printing results
+    win.close()
+
+    if key:
+        print(f"Key pressed: {key}")
+        print(f"Reaction time: {rt:.4f} seconds")
+        if duration is not None:
+            print(f"Key held duration: {duration:.4f} seconds")
+    else:
+        print("No key press detected within timeout.")
+
+    core.quit()
+"""
