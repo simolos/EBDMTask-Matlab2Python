@@ -19,6 +19,10 @@ KEY_PRESS = 22
 KEY_RELEASE = 23
 #========================
 
+class QuitSignal(Exception):
+    """Raised when the user requests to quit (e.g., ESC or 'q')."""
+    pass
+
 def init_keyboard(use_iohub: bool = True, use_hub: bool = False) -> Tuple[Optional[object], Optional[object]]:
     """
     Initialize IOHub server keyboard interface.
@@ -123,9 +127,25 @@ def poll_keys(kb: Optional[object], io: Optional[object]) -> List[object]:
     """
 
     if io and kb:
-        return kb.getEvents()
+        events = kb.getEvents()
+        for ev in events:
+            key = ev.key if hasattr(ev, 'key') else ev
+            if key in ('escape', 'q'):
+                raise QuitSignal()
+                return 0
+        return events
     return event.getKeys()
 
+"""
+def check_quit_events(kb, io):
+    #Poll keys and raise QuitSignal if quit key is pressed.
+    events = poll_keys(kb, io)  # your existing helper
+    for ev in events:
+        key = ev.key if hasattr(ev, 'key') else ev
+        if key in ('escape', 'q'):
+            raise QuitSignal()
+    return events
+"""
 """
 if __name__ == "__main__":
     # Create a PsychoPy window for event capture
