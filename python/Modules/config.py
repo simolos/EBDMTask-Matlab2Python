@@ -35,7 +35,13 @@ def parse_args():
                         help='Enable eye-tracking data collection')
     parser.add_argument('--test-dev', action='store_true',
                         help='Enable test/dev mode (mock inputs and WS)')
-    parser.add_argument('-mkp', '--multiplekeyspressed', type=str, default='N',
+    parser.add_argument('-m', '--mode', type=int, default=0,
+                        choices=[0, 1, 2],
+                        help='Mode of pressed keys activation (mode 0, 1 or 2)')
+    parser.add_argument('-chmap', '--ChangeMappingYes', type=str, default='N',
+                        choices=['N', 'Y'],
+                        help='Multiple keys pressed activation (Y/N)')
+    parser.add_argument('-fullscr', '--fullscreen', type=str, default='N',
                         choices=['N', 'Y'],
                         help='Multiple keys pressed activation (Y/N)')
     args = parser.parse_args()
@@ -50,8 +56,9 @@ def parse_args():
     return args
 
 ### Constants
-keys_choice = ['left', 'right']
+keys_choice = ['left', 'right'] # [left] -> yes, [right] -> No
 combo = {'q', 'z', 'e'} 
+
 
 # Translations dictionnary
 TRANSLATIONS = {
@@ -131,10 +138,10 @@ def get_task_duration(flag_eyetracker: int, flag_population: int) -> dict:
         dur["EP_Preparation"] = [1000, 1400]  # preparation for effort phase
         dur["Task"] = 8000  # effort production duration
         dur["Blank2"] = 500  # between EP and reward
-        dur["Reward"] = 1000  # reward screen duration
+        dur["Reward"] = 1000  # Feedback screen duration
         # pupil baseline recovery
         dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
-        dur["FinalFeedback"] = 4000  # Final Feedback
+        dur["FinalFeedback"] = 4000  # Final Feedback screen duration
         dur["StartBlock"] = 500  
 
     elif flag_population == 2:  # Old

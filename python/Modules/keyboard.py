@@ -130,7 +130,7 @@ def poll_keys(kb: Optional[object], io: Optional[object]) -> List[object]:
         events = kb.getEvents()
         for ev in events:
             key = ev.key if hasattr(ev, 'key') else ev
-            if key in ('escape', 'q'):
+            if key == 'escape':
                 raise QuitSignal()
                 return 0
         return events

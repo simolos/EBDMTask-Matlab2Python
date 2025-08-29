@@ -1,46 +1,54 @@
-# ws_utils.py
-# Simple background runner to use an asyncio WebSocket client from sync code.
-import asyncio
-import threading
-import logging
-from typing import Callable, Dict, Any
-from websocket_client import WebSocketClient
+# utils_ws.py
+# English comments
+from typing import Any, Dict, Iterable, Optional
+import numpy as np
+import pandas as pd
 
-class WSRunner:
-    """Run WebSocketClient on a background asyncio loop."""
-    def __init__(self, uri: str, on_message: Callable[[Dict[str, Any]], None] | None = None):
-        self.uri = uri
-        self.on_message = on_message or (lambda msg: logging.debug(f"[WS] {msg}"))
-        self.loop = asyncio.new_event_loop()
-        self.thread = threading.Thread(target=self._run_loop, daemon=True)
-        self.client = WebSocketClient(uri=self.uri, on_message=self.on_message)
-        self._connected = False
+def _to_json_scalar(x: Any) -> Any:
+    """Convert pandas/NumPy scalars and NaN to JSON-safe Python types."""
+    # NaN/NaT -> None
+    try:
+        if pd.isna(x):
+            return None
+    except Exception:
+        pass
+    # NumPy scalar -> Python scalar
+    if isinstance(x, np.generic):
+        return x.item()
+    # Primitive types are already fine
+    if isinstance(x, (bool, int, float, str)) or x is None:
+        return x
+    # Fallback (shouldn't happen for trials row): stringify
+    return str(x)
 
-    def _run_loop(self):
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_forever()
+def trial_row_payload(
+    trials: pd.DataFrame,
+    i: int,
+    include: Optional[Iterable[str]] = None,  # keep None to send ALL columns
+    exclude: Optional[Iterable[str]] = None,  # or exclude a few if needed
+    drop_none: bool = False,                  # keep None if you want explicit "unknown"
+) -> Dict[str, Any]:
+    """Build a JSON-safe dict from trials.iloc[i] (only trial info)."""
+    row = trials.iloc[i]
+    cols = list(row.index)
 
-    def start(self):
-        """Start background loop and connect the client."""
-        if not self.thread.is_alive():
-            self.thread.start()
-        fut = asyncio.run_coroutine_threadsafe(self.client.connect(), self.loop)
-        fut.result()  # wait until connected (fast)
-        self._connected = True
-        logging.info(f"WS connected to {self.uri}")
+    if include is not None:
+        cols = [c for c in cols if c in include]
+    if exclude is not None:
+        cols = [c for c in cols if c not in exclude]
 
-    def send(self, event: str, payload: Dict[str, Any]):
-        """Fire-and-forget send; safe to call from main PsychoPy thread."""
-        if not self._connected:
-            logging.warning("WS not connected; dropping message")
-            return
-        asyncio.run_coroutine_threadsafe(self.client.send(event, payload), self.loop)
+    payload: Dict[str, Any] = {}
+    for col in cols:
+        val = _to_json_scalar(row[col])
+        if (val is None) and drop_none:
+            continue
+        payload[col] = val
 
-    def close(self):
-        """Gracefully close client and stop the loop."""
-        if self._connected:
-            asyncio.run_coroutine_threadsafe(self.client.close(), self.loop).result()
-            self._connected = False
-        self.loop.call_soon_threadsafe(self.loop.stop)
-        if self.thread.is_alive():
-            self.thread.join(timeout=2)
+    # Ensure a proper int for "trial" if present
+    if "trial" in payload and payload["trial"] is not None:
+        try:
+            payload["trial"] = int(payload["trial"])
+        except Exception:
+            pass
+
+    return payload

@@ -72,7 +72,6 @@ class DataRecorder:
         Save everything (trials + CURSOR + KEYPR + TaskTimings + meta) into ONE file.
 
         fmt: "csv" | "xlsx" | "mat"
-        csv_mode: "long" (recommended; one big long table)
         """
         assert cursor is not None and keypr is not None, "cursor/keypr required"
         nF, nT = cursor.shape

@@ -3,14 +3,12 @@
 from psychopy import core
 from keyboard import init_keyboard, poll_keys, clear_events, wait_for_keys
 from screens import Screens
-from websocket_client import WebSocketClient
 import numpy as np
 
 # ======= CONSTANTS ========
 KEY_PRESS = 22
 KEY_RELEASE = 23
 # ==========================
-
 
 def hand_positioning_phase(i, win, screens, kb, expClock, dur, trials, TaskTimings):
     """
@@ -287,7 +285,7 @@ def effort_phase(i, win, screens, kb, io,
         hand_positioning_phase(i, win, screens, kb, expClock, dur, trials, TaskTimings)
         anticip = get_ready_phase(i, win, screens, kb, io, expClock, trials,
                                   flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings)
-        effort_production_phase([i, win, screens, kb, io, expClock,
+        effort_production_phase(i, win, screens, kb, io, expClock,
                                 dur, GV, Hz, trials, CURSOR, TaskTimings,
                                 anticip, flag_MultipleKeyPressed)
         blank_phase(win, screens, dur, expClock, TaskTimings, i)
