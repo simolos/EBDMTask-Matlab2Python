@@ -1,1 +1,18 @@
 .DS_Store
+
+cat <<EOF > .gitignore
+.venv/
+__pycache__/
+*.pyc
+Data/*.xlsx
+Data/*.csv
+EOF
+/python/Test/EffortTest/venv/
+/python/Test/EffortTest/virtual/
+/python/Test/EffortTest/environment/
+/python/Test/EffortTest/Create/
+/python/Test/EffortTest/\#/
+/python/Test/EffortTest/named/
+/python/Test/EffortTest/a/
+/python/Test/EffortTest/venv_/
+/data_log/

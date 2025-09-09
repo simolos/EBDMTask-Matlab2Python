@@ -179,19 +179,3 @@ def GetTrialCondition(n_trials, n_effort_trials, flag_population):
         f"Expected total {n_trials} trials, got {cond_er.shape[0]}"
 
     return cond_er, indx_effort_trials
-
-"""
-if __name__ == "__main__":
-    # Test the function with different parameters
-    examples = [
-        (50, 20, 1),  # healthy group
-        (30, 10, 0),  # patient group
-    ]
-
-    for n_trials, n_effort, flag in examples:
-        cond_matrix, effort_idx = GetTrialCondition(n_trials, n_effort, flag)
-        print(f"Test: n_trials={n_trials}, n_effort_trials={n_effort}, flag_population={flag}")
-        print(f"  - Total trials generated: {cond_matrix.shape[0]}")
-        print(f"  - Effort trials count: {len(effort_idx)} (expected {n_effort})")
-        print(f"  - Sample rows (first 30):\n{cond_matrix[:30]}\n")
-"""

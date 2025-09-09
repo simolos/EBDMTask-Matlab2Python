@@ -1,125 +1,133 @@
-# coding: utf-8
-# French: Decision phase that writes directly into the original DataFrame
-from psychopy import core  # visual not needed here unless you draw off-screens
-from keyboard import poll_keys, clear_events, QuitSignal # <-- import the helpers you use
+from psychopy import core
+from keyboard import poll_keys, clear_events
 from config import keys_choice
-from ws_stream import TrialStreamer
 import numpy as np
 
 def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight):
     """
-    Execute the decision phase for trial i, reading inputs from 'trials' and
-    writing results back in-place using .at/.loc (no chained assignment).
+    Decision phase with strict post-response display:
+    - Response must occur before DM_S (decision window).
+    - After a valid response, keep drawing the 'tick' for AFTER_S seconds, then exit loop.
+    - Writes results back in-place to `trials`.
     """
 
     # --- 0) Resolve per-trial inputs & durations ---
-    # English: snapshot row for safe reads; all writes use trials.at[...] below
     row = trials.loc[i]
+    dur_prep_ms  = int(row.get('durPrep_DM', 1000))
+    dur_dm_ms    = int(dur.get('DM', 3000))
+    after_dm_ms  = int(dur.get('TimeAfterDMade', 500))
 
-    # English: per-trial prep duration from DF; fall back to 1000ms if missing
-    dur_prep_ms = int(row.get('durPrep_DM', 1000))
+    # Convert once to seconds
+    PREP_S   = dur_prep_ms / 1000.0
+    DM_S     = dur_dm_ms   / 1000.0
+    AFTER_S  = after_dm_ms / 1000.0
 
-    # English: DM & after-DM durations from the 'dur' dict; use safe defaults
-    dur_dm_ms   = int(dur.get('DM', 3000))
-    after_dm_ms = int(dur.get('TimeAfterDMade', 500))
-
-    # --- 1) Reset per-trial writable vars (in-place, no chained assignment) ---
+    # --- 1) Reset per-trial writable vars ---
     trials.at[i, 'Anticipation_DM'] = 0
     resp = -1
     decision_made = False
     choice = None
     t_resp = None
-    trigger_logged = False
+    start_trigger_sent = False
 
     # --- 2) Preparation (bDMcross) ---
-
-    # English: draw the static cross buffer once during the prep window
     for elem in screens._create_dmcross_buffer(flag_MapYesAtRight=flag_MapYesAtRight):
         elem.draw()
     win.flip()
-    streamer.send_event("Preparation DM start", {"trial": i+1, "durPrepDM [ms]": dur_prep_ms, "t": expClock.getTime()})
-    prepClock = core.Clock() # Initialisation of psychopy clock
-    # English: continuous anticipation detection during prep period
- 
-    while prepClock.getTime() < (dur_prep_ms / 1000.0):
-        events = poll_keys(kb, io)
-        for ev in events:
-            key_name = ev.key if hasattr(ev, 'key') else ev
-            if key_name in keys_choice and trials.at[i, 'Anticipation_DM'] == 0:
-                trials.at[i, 'Anticipation_DM'] = 1
-                TaskTimings.append((expClock.getTime(), f"T{i} Anticipation DM"))
-        core.wait(0.001)  # English: small sleep to avoid busy-wait
+
+    streamer.send_event(
+        "Preparation DM start",
+        {"trial": i+1, "durPrepDM [ms]": dur_prep_ms, "t": expClock.getTime()}
+    )
+
+    prepClock = core.Clock()  # zero at prep start
+    while prepClock.getTime() < PREP_S:
+        events = poll_keys(kb, io)  # keep to detect escape
+        if events and trials.at[i, 'Anticipation_DM'] == 0:
+            for ev in events:
+                key_name = ev.key if hasattr(ev, 'key') else ev
+                if key_name in keys_choice:
+                    trials.at[i, 'Anticipation_DM'] = 1
+                    TaskTimings.append((expClock.getTime(), f"T{i} Anticipation DM"))
+                    break
+        core.wait(0.001)
     TaskTimings.append((expClock.getTime(), f"T{i} Prep DM"))
 
-    # --- 3) Decision making (frame-by-frame) ---
+    # --- 3) Decision making window ---
     clear_events(kb, io)
-    decClock = core.Clock()
-    t_start = decClock.getTime()
+    decClock = core.Clock()  # zero at DM start
+    decision_window_end = DM_S        # absolute (relative to decClock)
+    post_resp_end = None              # set after first valid response
 
-    while (decClock.getTime() - t_start) < (dur_dm_ms / 1000.0):
-        # English: draw dynamic decision buffer using current choice (highlight)
+    while True:
+        now = decClock.getTime()
+
+        # --- Always poll once per loop to catch 'escape' even if no input needed ---
+        _ = poll_keys(kb, io)  # no-op; poll to ensure escape is processed
+
+        # Exit condition: before response -> bounded by DM_S; after response -> bounded by t_resp + AFTER_S
+        current_end = post_resp_end if post_resp_end is not None else decision_window_end
+        if now >= current_end:
+            break
+
+        # Draw dynamic decision buffer with tick when 'choice' is set
+        eff_norm = (float(row['effort']) - 0.3) / 0.7
+        eff_norm = max(0.0, min(1.0, eff_norm))
+
         elems = screens._create_decision_dynamic_buffer(
-            effort_level=(float(row['effort'])-0.3)/0.7,  
+            effort_level=eff_norm,
             rew_t=float(row['reward']),
-            choice=choice,
+            choice=choice,                       # when not None, buffer shows the tick
             flag_MapYesAtRight=flag_MapYesAtRight
         )
         for stim in elems:
             stim.draw()
         win.flip()
-        # English: log "Start DM" once
-        if not trigger_logged:
+
+        # Send "Start DM" once right after first flip
+        if not start_trigger_sent:
             TaskTimings.append((expClock.getTime(), f"T{i} Start DM"))
             streamer.send_event("Start DM", {"trial": i+1, "t": expClock.getTime()})
-            trigger_logged = True
+            start_trigger_sent = True
 
-        # English: poll for decision keys
-        t0 = expClock.getTime()
-        events = poll_keys(kb, io)
-        for ev in events:
-            key_name = ev.key if hasattr(ev, 'key') else ev
-            if not decision_made and key_name in keys_choice:
-                if flag_MapYesAtRight:
-                    if key_name == keys_choice[1]:
-                        resp = 1
-                        choice = "yes"
-                        decision_made = True
-                        t_resp = decClock.getTime()
-                        TaskTimings.append((expClock.getTime(), f"T{i} Decided Yes"))
-                    elif key_name == keys_choice[0]:
-                        resp = 0
-                        choice = "no"
-                        decision_made = True
-                        t_resp = decClock.getTime()
-                        TaskTimings.append((expClock.getTime(), f"T{i} Decided No"))
-                else:
-                    if key_name == keys_choice[0]:
-                        resp = 1
-                        choice = "yes"
-                        decision_made = True
-                        t_resp = decClock.getTime()
-                        TaskTimings.append((expClock.getTime(), f"T{i} Decided Yes"))
-                    elif key_name == keys_choice[1]:
-                        resp = 0
-                        choice = "no"
-                        decision_made = True
-                        t_resp = decClock.getTime()
-                        TaskTimings.append((expClock.getTime(), f"T{i} Decided No"))
-                t1 = expClock.getTime() - t0
-                print(f"duration : {t1}")
-                streamer.send_event("Decision", {"trial": i+1, "choice": resp, "t":expClock.getTime()})
-                t_start = decClock.getTime() - dur_dm_ms + after_dm_ms
+        # Poll keys only if response not yet made and still inside DM window
+        if not decision_made and now < decision_window_end:
+            events = poll_keys(kb, io)
+            if events:
+                for ev in events:
+                    key_name = ev.key if hasattr(ev, 'key') else ev
+                    if key_name in keys_choice:
+                        # Map keys -> yes/no depending on layout
+                        if flag_MapYesAtRight:
+                            if key_name == keys_choice[1]:
+                                resp, choice = 1, "yes"
+                            elif key_name == keys_choice[0]:
+                                resp, choice = 0, "no"
+                            else:
+                                continue
+                        else:
+                            if key_name == keys_choice[0]:
+                                resp, choice = 1, "yes"
+                            elif key_name == keys_choice[1]:
+                                resp, choice = 0, "no"
+                            else:
+                                continue
 
-"""
-        # English: keep displaying ~after_dm_ms after response, then break
-        if decision_made and (decClock.getTime() - t_resp) > (after_dm_ms / 1000.0):
-            break
-"""
+                        decision_made = True
+                        t_resp = now  # seconds since DM start
+                        TaskTimings.append((expClock.getTime(), f"T{i} Decided {'Yes' if resp==1 else 'No'}"))
+                        streamer.send_event("Decision", {"trial": i+1, "choice": resp, "t": expClock.getTime()})
+
+                        # Strict post-response period: display tick for AFTER_S seconds, then exit loop
+                        post_resp_end = t_resp + AFTER_S
+                        break
+
         core.wait(0.001)
 
-    # --- 4) Record results (in-place) ---
+    # --- 4) Record results ---
     if decision_made:
-        trials.at[i, 'DecisionTime'] = t_resp - t_start
+        # DecisionTime = time from DM onset to keypress (seconds)
+        trials.at[i, 'DecisionTime'] = t_resp
         trials.at[i, 'Acceptance']   = resp
     else:
         trials.at[i, 'DecisionTime'] = np.nan

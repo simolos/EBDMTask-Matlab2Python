@@ -1,145 +1,194 @@
-# server.py
-import asyncio
+# main_server.py
+# FastAPI server for real-time trial streaming (JSON control + binary arrays)
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 import json
 import logging
-from typing import Dict, Any, Set
-import websockets
-from websockets.server import WebSocketServerProtocol
-from websockets.exceptions import ConnectionClosed
+from pathlib import Path
+from typing import Optional, Dict, Any
+import numpy as np
+import time
 
-logging.basicConfig(level=logging.INFO)
+# -------- Config --------
+LOG_LEVEL = "INFO"
+WS_ROUTE = "/trials"
+SAVE_DIR = Path("./session_data")  # all outputs saved here
+SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
-class WSServer:
+# Files for control events and array headers (JSON Lines)
+CONTROL_JSONL = SAVE_DIR / "control_events.jsonl"
+HEADERS_JSONL = SAVE_DIR / "array_headers.jsonl"
+
+# -------- App --------
+app = FastAPI(title="EBDM Trial Streaming Server", version="1.0")
+
+# CORS is optional; allow everything by default
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], allow_credentials=True,
+    allow_methods=["*"], allow_headers=["*"],
+)
+
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL),
+    format="[%(asctime)s] %(levelname)s %(message)s",
+)
+
+# -------- Small helpers --------
+def jsonl_append(path: Path, obj: Dict[str, Any]) -> None:
+    """Append a JSON object as a new line to a .jsonl file."""
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+
+
+def save_array_chunk(base_dir: Path, name: str, trial: int, arr: np.ndarray) -> Path:
     """
-    Simple JSON-based WebSocket server:
-      - Expects JSON messages with at least an "event" key
-      - Routes events to handlers
-      - Sends JSON responses
-      - Supports broadcast to all connected clients
+    Save an array as .npy inside a subfolder per array name.
+    Filename carries trial number and timestamp to avoid overwrites.
     """
-    def __init__(self, host: str = "localhost", port: int = 8765):
-        self.host = host
-        self.port = port
-        self.clients: Set[WebSocketServerProtocol] = set()
-        self.server = None
+    sub = base_dir / name
+    sub.mkdir(parents=True, exist_ok=True)
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    path = sub / f"{name}_trial{trial}_{ts}.npy"
+    # Save with allow_pickle=False for safety
+    np.save(path, arr, allow_pickle=False)
+    return path
 
-    async def start(self):
-        # Start the websocket server
-        self.server = await websockets.serve(self._handler, self.host, self.port)
-        logging.info(f"WebSocket server running at ws://{self.host}:{self.port}")
-        # Keep the server alive
-        await self.server.wait_closed()
 
-    async def _handler(self, ws: WebSocketServerProtocol):
-        # Register client
-        self.clients.add(ws)
-        client_name = f"{ws.remote_address[0]}:{ws.remote_address[1]}"
-        logging.info(f"Client connected: {client_name}")
+def now_perf() -> float:
+    """Return a high-resolution timestamp (seconds)."""
+    return time.perf_counter()
 
-        # Optional: send a welcome message
-        await self._send(ws, event="server_welcome", message="Connected to EBDM server")
 
-        try:
-            async for raw in ws:
-                # Parse as JSON
-                try:
-                    data = json.loads(raw)
-                except json.JSONDecodeError:
-                    await self._send(ws, event="error", message="Invalid JSON")
-                    continue
+# -------- WebSocket endpoint --------
+@app.websocket(WS_ROUTE)
+async def trials_ws(ws: WebSocket):
+    await ws.accept()
+    logging.info("[SRV] Client connected to %s", WS_ROUTE)
 
-                # Ensure "event" exists
-                event = data.get("event")
-                if not event:
-                    await self._send(ws, event="error", message="Missing 'event' field")
-                    continue
+    # We expect: either plain control JSON messages,
+    # or "array_header" JSON immediately followed by one binary frame.
+    pending_array_header: Optional[dict] = None
 
-                # Route to handler
-                await self._route_event(ws, event, data)
-        except ConnectionClosed:
-            logging.info(f"Client disconnected: {client_name}")
-        finally:
-            # Unregister client
-            self.clients.discard(ws)
-
-    async def _route_event(self, ws: WebSocketServerProtocol, event: str, data: Dict[str, Any]):
-        """
-        Route incoming events to the appropriate handler.
-        """
-        if event == "ping":
-            await self._send(ws, event="pong", ts=data.get("ts"))
-        elif event == "trial_update":
-            # Example: acknowledge and optionally broadcast
-            trial = data.get("trial")
-            status = data.get("status")
-            await self._send(ws, event="trial_update_ack", trial=trial, status=status)
-
-            # Broadcast to *other* clients that a trial changed
-            await self._broadcast(exclude=ws, event="trial_update_broadcast", trial=trial, status=status)
-        elif event == "subscribe":
-            # Example: keep-alive or marking subscriptions (extend as needed)
-            await self._send(ws, event="subscribed", topic=data.get("topic", "all"))
-        else:
-            # Unknown event
-            await self._send(ws, event="error", message=f"Unknown event '{event}'")
-
-    async def _send(self, ws: WebSocketServerProtocol, **payload):
-        """
-        Send a JSON message to a single client.
-        """
-        try:
-            await ws.send(json.dumps(payload))
-        except ConnectionClosed:
-            pass
-
-    async def _broadcast(self, exclude: WebSocketServerProtocol | None = None, **payload):
-        """
-        Send a JSON message to all connected clients (optionally excluding one).
-        """
-        if not self.clients:
-            return
-        msg = json.dumps(payload)
-        coros = []
-        for c in list(self.clients):
-            if exclude is not None and c is exclude:
-                continue
-            coros.append(self._safe_send(c, msg))
-        if coros:
-            await asyncio.gather(*coros, return_exceptions=True)
-
-    async def _safe_send(self, ws: WebSocketServerProtocol, msg: str):
-        try:
-            await ws.send(msg)
-        except ConnectionClosed:
-            self.clients.discard(ws)
-
-async def main():
-    server = WSServer(host="localhost", port=8765)
-    # Graceful shutdown handling
-    stop = asyncio.Future()
-
-    def _stop_signal():
-        if not stop.done():
-            stop.set_result(True)
-
-    loop = asyncio.get_running_loop()
-    for sig in ("SIGINT", "SIGTERM"):
-        try:
-            loop.add_signal_handler(getattr(__import__("signal"), sig), _stop_signal)
-        except (NotImplementedError, AttributeError):
-            # Windows/limited env: fallback—no signal handlers
-            pass
-
-    srv_task = asyncio.create_task(server.start())
-    await stop  # wait for signal
-    # Close the server nicely
-    if server.server:
-        server.server.close()
-        await server.server.wait_closed()
-    await srv_task
-
-if __name__ == "__main__":
     try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        pass
+        while True:
+            msg = await ws.receive()
+
+            # ----- Text frame -----
+            if "text" in msg:
+                text = msg["text"]
+                try:
+                    data = json.loads(text)
+                except json.JSONDecodeError:
+                    logging.warning("[SRV] Ignored non-JSON text: %r", text)
+                    continue
+
+                event = data.get("event")
+                proto = data.get("proto", "v1")
+                data["t_recv"] = now_perf()  # server receive timestamp
+
+                if event == "array_header":
+                    # Header announcing the next binary frame
+                    # Expected keys: name, trial, dtype, shape, order (optional), meta (optional)
+                    missing = [k for k in ["name", "trial", "dtype", "shape"] if k not in data]
+                    if missing:
+                        logging.warning("[SRV] array_header missing keys: %s", missing)
+                        # Optional error back to client
+                        await ws.send_text(json.dumps({"event": "error", "reason": f"missing:{missing}"}))
+                        continue
+
+                    pending_array_header = data
+                    jsonl_append(HEADERS_JSONL, data)
+                    # Optional ACK
+                    await ws.send_text(json.dumps({"event": "ack", "ack_of": "array_header",
+                                                   "name": data["name"], "trial": data["trial"], "proto": proto}))
+                else:
+                    if event == "trial_record":
+                        logging.info("[SRV] TRIAL %s acc=%s succ=%s rew=%s eff=%s dt=%.3f rt=%.3f",
+                                    data.get("trial"),
+                                    data.get("Acceptance"),
+                                    data.get("success"),
+                                    data.get("reward"),
+                                    data.get("effort"),
+                                    (data.get("DecisionTime") or 0.0),
+                                    (data.get("ReactionTimeEP") or 0.0))
+                    # Persist and ACK (already in your code)
+                    jsonl_append(CONTROL_JSONL, data)
+                    await ws.send_text(json.dumps({"event":"ack","ack_of":event,"trial":data.get("trial"),"proto":proto}))
+                    # Control event -> persist and (optionally) respond
+                    jsonl_append(CONTROL_JSONL, data)
+                    # Optional lightweight ACK for reliability
+                    await ws.send_text(json.dumps({"event": "ack", "ack_of": event, "trial": data.get("trial"),
+                                                   "proto": proto}))
+
+            # ----- Binary frame -----
+            elif "bytes" in msg:
+                if pending_array_header is None:
+                    logging.warning("[SRV] Unexpected binary without header; ignoring")
+                    # Optionally notify client
+                    await ws.send_text(json.dumps({"event": "error", "reason": "binary_without_header"}))
+                    continue
+
+                hdr = pending_array_header
+                pending_array_header = None
+
+                raw: bytes = msg["bytes"]
+                dtype = np.dtype(hdr["dtype"])
+                shape = tuple(hdr["shape"])
+                order = hdr.get("order", "C")
+
+                # Rebuild array from raw bytes
+                arr = np.frombuffer(raw, dtype=dtype)
+                try:
+                    arr = arr.reshape(shape, order=order)
+                except Exception as e:
+                    logging.exception("[SRV] Reshape failed: %s", e)
+                    await ws.send_text(json.dumps({"event": "error", "reason": "reshape_failed"}))
+                    continue
+
+                # Save array for this trial/name
+                out_path = save_array_chunk(SAVE_DIR, hdr["name"], int(hdr["trial"]), arr)
+                logging.info("[SRV] Saved array %s trial=%s shape=%s -> %s",
+                             hdr["name"], hdr["trial"], arr.shape, out_path.name)
+
+                # Optional ACK with stats
+                await ws.send_text(json.dumps({
+                    "event": "ack",
+                    "ack_of": "array_bytes",
+                    "name": hdr["name"],
+                    "trial": hdr["trial"],
+                    "shape": hdr["shape"],
+                    "dtype": hdr["dtype"],
+                }))
+
+            else:
+                # Other message types (e.g., close) are ignored here
+                pass
+
+    except WebSocketDisconnect:
+        logging.info("[SRV] Client disconnected")
+    except Exception as e:
+        logging.exception("[SRV] Unexpected server error: %s", e)
+        try:
+            await ws.close(code=1011, reason=str(e))
+        except Exception:
+            pass
+
+
+# -------- Health & root --------
+@app.get("/")
+def root():
+    return {"status": "ok", "route": WS_ROUTE, "save_dir": str(SAVE_DIR.resolve())}
+
+@app.get("/health")
+def health():
+    return {"ok": True}
+
+
+# -------- Entrypoint --------
+if __name__ == "__main__":
+    # Run with: python websocket_sever.py
+    # Or: uvicorn websocket_server:app --host 0.0.0.0 --port 8765 --log-level info
+    uvicorn.run("websocket_server:app", host="0.0.0.0", port=8765, reload=False, log_level="info")

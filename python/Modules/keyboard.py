@@ -80,6 +80,8 @@ def wait_for_keys(
         name: key name or None
         rt: time of key press or None
         duration: time between press and release or None
+
+    Actually not used in the code but can be helpful
     """
     clock = core.Clock()
     end_time = clock.getTime() + timeout
@@ -136,55 +138,3 @@ def poll_keys(kb: Optional[object], io: Optional[object]) -> List[object]:
         return events
     return event.getKeys()
 
-"""
-def check_quit_events(kb, io):
-    #Poll keys and raise QuitSignal if quit key is pressed.
-    events = poll_keys(kb, io)  # your existing helper
-    for ev in events:
-        key = ev.key if hasattr(ev, 'key') else ev
-        if key in ('escape', 'q'):
-            raise QuitSignal()
-    return events
-"""
-"""
-if __name__ == "__main__":
-    # Create a PsychoPy window for event capture
-    win = visual.Window(
-        size=(800, 600),
-        color=[0, 0, 0],
-        units='pix',
-        fullscr=False
-    )
-
-    # Initialize keyboard (fallback to PsychoPy event module)
-    kb, io = init_keyboard(use_iohub=True, use_hub=True)
-    
-        # Display instructions
-    instructions = visual.TextStim(
-        win,
-        text="Press one of the keys ['a', 'b', 'escape'] within 5 seconds...",
-        color=[1, 1, 1]
-    )
-    instructions.draw()
-    win.flip()
-
-    key, rt, duration = wait_for_keys(
-        keys=['a', 'b', 'escape'],
-        timeout=10.0,
-        kb=kb,
-        io=io
-    )
-
-    # Close window before printing results
-    win.close()
-
-    if key:
-        print(f"Key pressed: {key}")
-        print(f"Reaction time: {rt:.4f} seconds")
-        if duration is not None:
-            print(f"Key held duration: {duration:.4f} seconds")
-    else:
-        print("No key press detected within timeout.")
-
-    core.quit()
-"""

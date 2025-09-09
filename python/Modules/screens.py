@@ -58,10 +58,10 @@ class Screens:
         self.rect_h = 800 * self.scale_y
     
         # Colors
-        self.darkgrey = [0.2, 0.2, 0.2] #for the texts
+        self.darkgrey = [0.2, 0.2, 0.2]  # for the texts
         self.bargrey = [0.25, 0.25, 0.25]
-        self.LIGHT_GREY = [0.9, 0.9, 0.9]
-        self.DARK_GREY = [0.6510, 0.6510, 0.6510]
+        self.UI_LIGHT_GREY = [0.9, 0.9, 0.9]
+        self.MOVING_BAR_GREY = [0.6510, 0.6510, 0.6510]
         self.BLACK = [0, 0, 0]
 
         # 
@@ -271,7 +271,7 @@ class Screens:
 
     def _create_cursor_dynamic_buffer(self, cursor):
         bar_y = (cursor-0.5)*self.rect_h
-        effort_bar = visual.Rect(self.win, width=self.rect_w*1.1, height=self.cross_thickness/2, pos=(0, bar_y), fillColor=self.DARK_GREY, lineColor=self.DARK_GREY, lineWidth=self.cross_thickness/3)
+        effort_bar = visual.Rect(self.win, width=self.rect_w*1.1, height=self.cross_thickness/2, pos=(0, bar_y), fillColor=self.MOVING_BAR_GREY, lineColor=self.MOVING_BAR_GREY, lineWidth=self.cross_thickness/3)
         return [effort_bar]
 
     def _create_ffeedback_buffer(self, final_reward):
