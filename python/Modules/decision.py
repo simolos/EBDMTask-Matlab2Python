@@ -80,8 +80,8 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
             choice=choice,                       # when not None, buffer shows the tick
             flag_MapYesAtRight=flag_MapYesAtRight
         )
-        for stim in elems:
-            stim.draw()
+        for elem in elems:
+            elem.draw()
         win.flip()
 
         # Send "Start DM" once right after first flip

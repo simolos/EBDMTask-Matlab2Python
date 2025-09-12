@@ -1,4 +1,4 @@
-# comments in English
+# screens.py
 from psychopy import visual, core, monitors
 import numpy as np
 from config import TRANSLATIONS

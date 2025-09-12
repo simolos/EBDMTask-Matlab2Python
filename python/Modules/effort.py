@@ -96,8 +96,8 @@ def get_ready_phase(
       - else:   anticipation on KEY_PRESS of active key
     """
     TaskTimings.append((expClock.getTime(), f"T{i} Get ready"))
-    for stim in screens.bGetReadyForEP:
-        stim.draw()
+    for elem in screens.bGetReadyForEP:
+        elem.draw()
     win.flip()
 
     prepEPClock = core.Clock()
@@ -145,12 +145,12 @@ def effort_production_phase(
     # Initial 'Go' frame (time zero)
     target_effort = (float(trials.loc[i, 'effort']) - 0.3) / 0.7
     reward_val = float(trials.loc[i, 'reward'])
-    for stim in screens.bTaskWait:
-        stim.draw()
-    for stim in screens._create_reward_buffer(reward_val, target_effort):
-        stim.draw()
-    for stim in screens._create_bar_buffer(target_effort):
-        stim.draw()
+    for elem in screens.bTaskWait:
+        elem.draw()
+    for elem in screens._create_reward_buffer(reward_val, target_effort):
+        elem.draw()
+    for elem in screens._create_bar_buffer(target_effort):
+        elem.draw()
     win.flip()
 
     EPClock = core.Clock()
@@ -171,14 +171,14 @@ def effort_production_phase(
         frame_t0 = EPClock.getTime()
 
         # Draw static layers
-        for stim in screens.bTaskWait:
-            stim.draw()
-        for stim in screens.bGoEP:
-            stim.draw()
-        for stim in screens._create_reward_buffer(reward_val, target_effort):
-            stim.draw()
-        for stim in screens._create_bar_buffer(target_effort):
-            stim.draw()
+        for elem in screens.bTaskWait:
+            elem.draw()
+        for elem in screens.bGoEP:
+            elem.draw()
+        for elem in screens._create_reward_buffer(reward_val, target_effort):
+            elem.draw()
+        for elem in screens._create_bar_buffer(target_effort):
+            elem.draw()
 
         # Onset detection per mode
         if flag_MultipleKeyPressed == 1:
@@ -241,8 +241,8 @@ def effort_production_phase(
 
 def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i):
     """Cross between EP and feedback. Uses dur['Blank2'] (ms)."""
-    for stim in screens.bTaskWaitCross:
-        stim.draw()
+    for elem in screens.bTaskWaitCross:
+        elem.draw()
     win.flip()
     core.wait(dur["Blank2"] / 1000.0)
     TaskTimings.append((expClock.getTime(), f"T{i} WaitingFeedback"))
@@ -257,8 +257,8 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
     """
     if trials.loc[i, 'Anticipation_EP'] == 1:
         trials.at[i, 'success'] = 0
-        for stim in screens.bAnticip:
-            stim.draw()
+        for elem in screens.bAnticip:
+            elem.draw()
         TaskTimings.append((expClock.getTime(), f"T{i} FeedbackAnticip"))
         streamer.send_event("FeedbackAnticip", {"trial": i + 1, "t": expClock.getTime()})
         win.flip()
@@ -274,16 +274,16 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
     streamer.send_event("Feedback", {"trial": i + 1, "Result": success, "t": expClock.getTime()})
 
     if success == 1:
-        for stim in screens.bSuccess:
-            stim.draw()
+        for elem in screens.bSuccess:
+            elem.draw()
         TaskTimings.append((expClock.getTime(), f"T{i} FeedbackSuccess"))
     elif success == -1:
-        for stim in screens.bFailure:
-            stim.draw()
+        for elem in screens.bFailure:
+            elem.draw()
         TaskTimings.append((expClock.getTime(), f"T{i} FeedbackBigFailure"))
     else:
-        for stim in screens.bFailure:
-            stim.draw()
+        for elem in screens.bFailure:
+            elem.draw()
         TaskTimings.append((expClock.getTime(), f"T{i} FeedbackFailure"))
 
     win.flip()
@@ -292,12 +292,12 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
 
 def pupil_baseline_phase(streamer, win, screens, dur):
     """Cross for pupil baseline recovery. Uses dur['TimeForPupilBaselineBack'] (ms)."""
-    for stim in screens.bRectCross:
-        stim.draw()
+    for elem in screens.bRectCross:
+        elem.draw()
     win.flip()
     core.wait(dur["TimeForPupilBaselineBack"] / 1000.0)
-    for stim in screens.bRectCross:
-        stim.draw()
+    for elem in screens.bRectCross:
+        elem.draw()
     win.flip()
 
 

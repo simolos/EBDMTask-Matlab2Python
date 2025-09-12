@@ -9,7 +9,7 @@ from screens import Screens
 from general_trial import GetTrialCondition
 from config import parse_args, get_task_duration, init_trials
 from decision import decision_phase
-from effort_new import effort_phase, init_cursor_matrix
+from effort import effort_phase, init_cursor_matrix
 from ws_utils import trial_row_payload
 from keyboard import init_keyboard, poll_keys, clear_events, QuitSignal
 from ws_stream import TrialStreamer
