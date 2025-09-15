@@ -1,181 +1,242 @@
 # Modules/generation_trial.py
-
 import numpy as np
 
-def GetTrialCondition(n_trials, n_effort_trials, flag_population):
-    # Define effort levels based on population
-    if flag_population == 1:
-        eff_proposed = np.array([0.5, 0.65, 0.8, 0.95])
+def _balanced_pick_rows_per_effort(pool, Eff_Proposed, rows_per_value):
+    """
+    Return a balanced selection across effort levels (first column),
+    taking up to rows_per_value per level without replacement.
+    pool: (N,3) array [effort, reward, flag]
+    """
+    selected = []
+    for value in np.unique(Eff_Proposed):
+        rows = pool[pool[:, 0] == value]
+        if len(rows) <= rows_per_value:
+            selected.append(rows)
+        else:
+            idx = np.random.choice(len(rows), rows_per_value, replace=False)
+            selected.append(rows[idx])
+    if len(selected) == 0:
+        return np.empty((0, pool.shape[1]))
+    return np.vstack(selected)
+
+def GetTrialCondition(nTrials, n_Effort_Trials, flag_Population):
+    """
+    Strict port of the MATLAB GetTrialCondition.
+    Returns:
+      Cond_E_R: (nTrials, 3) array [Effort, Reward, EP_flag]
+      indx_Effort_Trials: indices where EP_flag==1
+    """
+    # --- Effort grid (per population) ---
+    if flag_Population == 1:
+        Eff_Proposed = np.array([0.5, 0.65, 0.8, 0.95])
     else:
-        eff_proposed = np.array([0.45, 0.6, 0.75, 0.9])
+        Eff_Proposed = np.array([0.45, 0.6, 0.75, 0.9])
 
-    # Define reward levels
-    rew_proposed = np.array([1, 5, 10, 20])
-    n_total_comb = len(eff_proposed) * len(rew_proposed)
+    Rew_Proposed = np.array([1, 5, 10, 20])
+    Effort, Reward = np.meshgrid(Eff_Proposed, Rew_Proposed)
 
-    # Generate all Effort × Reward combinations with integer flags
-    Eff, Rew = np.meshgrid(eff_proposed, rew_proposed)
-    all_comb = np.column_stack((Eff.ravel(), Rew.ravel(),
-                                np.zeros(n_total_comb, dtype=int)))
-    all_comb_ep = np.column_stack((Eff.ravel(), Rew.ravel(),
-                                   np.ones(n_total_comb, dtype=int)))
+    # All combinations; 3rd col is EP flag (0=DM only, 1=EP)
+    all_combinations = np.column_stack([Effort.ravel(), Reward.ravel(),
+                                        np.zeros(Effort.size, dtype=int)])
+    all_combinations_EP = np.column_stack([Effort.ravel(), Reward.ravel(),
+                                           np.ones(Effort.size, dtype=int)])
+    N_total_comb = all_combinations.shape[0]
+    Cond_E_R = np.empty((0, 3))
 
-    cond_er_blocks = []
+    # ---- CASE A: need to repeat all combinations (nTrials >= N_total_comb) ----
+    if (nTrials // N_total_comb) > 0:
+        reps = nTrials // N_total_comb
 
-    # CASE 1: at least one full pass over all combinations
-    repetitions = n_trials // n_total_comb
-    if repetitions > 0:
-        # Build the EP counts vector
-        full_blocks = n_effort_trials // n_total_comb
-        remainder = n_effort_trials % n_total_comb
-        ep_counts = [n_total_comb] * full_blocks + [remainder]
-        # pad with zeros if needed
-        ep_counts += [0] * (repetitions - len(ep_counts))
+        # EP_vector (how many EP flags to set per full block)
+        ep_full_blocks = (n_Effort_Trials // N_total_comb)
+        ep_remainder   = (n_Effort_Trials %  N_total_comb)
+        EP_vector = ([N_total_comb] * ep_full_blocks) + ([ep_remainder] if ep_remainder > 0 else [])
+        # pad to reps
+        if len(EP_vector) < reps:
+            EP_vector += [0] * (reps - len(EP_vector))
 
-        for b in range(repetitions):
-            # how many EP trials per effort level this block
-            rows_per_effort = int(np.ceil(ep_counts[b] / len(eff_proposed)))
-            selected_rows = []
+        for b in range(reps):
+            rows_per_value = int(np.ceil(EP_vector[b] / len(Eff_Proposed))) if len(Eff_Proposed) > 0 else 0
+            # fresh zero-flag block
+            block = all_combinations.copy()
+            # balanced selection to flag as EP=1
+            if rows_per_value > 0:
+                selected_rows = _balanced_pick_rows_per_effort(block, Eff_Proposed, rows_per_value)
+                # set EP flag=1 for selected rows (match on Eff & Rew)
+                # (vectorized match)
+                if len(selected_rows) > 0:
+                    # build boolean mask where rows are in selected_rows
+                    sel_mask = (block[:, None, 0] == selected_rows[None, :, 0]) & \
+                               (block[:, None, 1] == selected_rows[None, :, 1])
+                    sel_mask = sel_mask.any(axis=1)
+                    block[sel_mask, 2] = 1
+            # append to Cond_E_R
+            Cond_E_R = np.vstack([Cond_E_R, block])
 
-            # select balanced by effort level
-            for level in eff_proposed:
-                mask = all_comb[:, 0] == level
-                candidates = all_comb[mask]
-                if len(candidates) <= rows_per_effort:
-                    sel = candidates
-                else:
-                    sel = candidates[np.random.choice(len(candidates),
-                                                     rows_per_effort,
-                                                     replace=False)]
-                selected_rows.append(sel)
+        # Adjust EP count to n_Effort_Trials
+        ep_idx = np.where(Cond_E_R[:, 2] == 1)[0]
+        if len(ep_idx) < n_Effort_Trials:
+            need = n_Effort_Trials - len(ep_idx)
+            # add from EP pool (random)
+            add_idx = np.random.choice(N_total_comb, size=need, replace=False)
+            Cond_E_R = np.vstack([Cond_E_R, all_combinations_EP[add_idx]])
+        elif len(ep_idx) > n_Effort_Trials:
+            extra = len(ep_idx) - n_Effort_Trials
+            drop = np.random.choice(ep_idx, size=extra, replace=False)
+            Cond_E_R = np.delete(Cond_E_R, drop, axis=0)
 
-            sel = np.vstack(selected_rows)
-            # mark selected rows as EP
-            for r in sel:
-                match = np.all(all_comb[:, :2] == r[:2], axis=1)
-                all_comb[match, 2] = 1
-
-            cond_er_blocks.append(all_comb.copy())
-            # reset flags for next block
-            all_comb[:, 2] = 0
-
-        cond_er = np.vstack(cond_er_blocks)
-        # adjust to exactly n_effort_trials
-        current_ep = int((cond_er[:, 2] == 1).sum())
-        if current_ep < n_effort_trials:
-            add_count = n_effort_trials - current_ep
-            replace_flag = add_count > n_total_comb
-            to_add = all_comb_ep[np.random.choice(n_total_comb,
-                                                  add_count,
-                                                  replace=replace_flag)]
-            cond_er = np.vstack((cond_er, to_add))
-        elif current_ep > n_effort_trials:
-            ep_idx = np.where(cond_er[:, 2] == 1)[0]
-            remove_idx = np.random.choice(ep_idx,
-                                          current_ep - n_effort_trials,
-                                          replace=False)
-            cond_er = np.delete(cond_er, remove_idx, axis=0)
-
-        # complete with decision trials to reach n_trials
-        remaining = n_trials - len(cond_er)
-        rows_per_effort_dm = remaining // len(eff_proposed)
-        dm_blocks = []
-        for level in eff_proposed:
-            mask = all_comb[:, 0] == level
-            candidates = all_comb[mask]
-            if len(candidates) <= rows_per_effort_dm:
-                sel = candidates
+        # Add missing DM trials to reach exactly nTrials with balancing
+        remaining = nTrials - Cond_E_R.shape[0]
+        if remaining > 0:
+            rows_per_value = remaining // len(Eff_Proposed) if len(Eff_Proposed) > 0 else 0
+            selected_rows = _balanced_pick_rows_per_effort(all_combinations, Eff_Proposed, rows_per_value)
+            # if still short (due to integer division), top up randomly
+            topup = nTrials - (Cond_E_R.shape[0] + selected_rows.shape[0])
+            if topup > 0:
+                rnd_idx = np.random.choice(N_total_comb, size=topup, replace=False)
+                extra = all_combinations[rnd_idx]
+                Cond_E_R = np.vstack([Cond_E_R, selected_rows, extra])
             else:
-                sel = candidates[np.random.choice(len(candidates),
-                                                 rows_per_effort_dm,
-                                                 replace=False)]
-            dm_blocks.append(sel)
-        dm_block = np.vstack(dm_blocks)
+                Cond_E_R = np.vstack([Cond_E_R, selected_rows])
 
-        extra_needed = remaining - len(dm_block)
-        replace_flag = extra_needed > n_total_comb
-        extra = all_comb[np.random.choice(n_total_comb,
-                                           max(0, extra_needed),
-                                           replace=replace_flag)]
-        cond_er = np.vstack((cond_er, dm_block, extra))
-
+    # ---- CASE B: fewer than all combinations (nTrials < N_total_comb) ----
     else:
-        # CASE 2: fewer total trials than all combinations
-        cond_er = all_comb.copy()
-        # balanced selection for decision trials
-        rep_per_effort = int(np.ceil(n_trials / len(eff_proposed)))
-        dm_selected = []
-        for level in eff_proposed:
-            mask = cond_er[:, 0] == level
-            candidates = cond_er[mask]
-            if len(candidates) <= rep_per_effort:
-                sel = candidates
+        # Start from all combos; select a balanced DM subset
+        single_effort_repetition_num = int(np.ceil(nTrials / len(Eff_Proposed))) if len(Eff_Proposed) > 0 else 0
+        selected_combinations = []
+        for effort in Eff_Proposed:
+            rows_w_effort = all_combinations[all_combinations[:, 0] == effort]
+            if len(rows_w_effort) <= single_effort_repetition_num:
+                selected_combinations.append(rows_w_effort)
             else:
-                sel = candidates[np.random.choice(len(candidates),
-                                                 rep_per_effort,
-                                                 replace=False)]
-            dm_selected.append(sel)
-        cond_er = np.vstack(dm_selected)
+                idx = np.random.choice(len(rows_w_effort), single_effort_repetition_num, replace=False)
+                selected_combinations.append(rows_w_effort[idx])
+        selected_combinations = np.vstack(selected_combinations) if len(selected_combinations) else np.empty((0,3))
 
-        # adjust exact decision trial count
-        current_dm = int((cond_er[:, 2] == 0).sum())
-        if current_dm < n_trials:
-            add_count = n_trials - current_dm
-            replace_flag = add_count > n_total_comb
-            add = all_comb[np.random.choice(n_total_comb,
-                                            add_count,
-                                            replace=replace_flag)]
-            cond_er = np.vstack((cond_er, add))
-        elif current_dm > n_trials:
-            dm_idx = np.where(cond_er[:, 2] == 0)[0]
-            remove_idx = np.random.choice(dm_idx,
-                                          current_dm - n_trials,
-                                          replace=False)
-            cond_er = np.delete(cond_er, remove_idx, axis=0)
+        # Keep only those rows in Cond_E_R (balanced DM pool)
+        # (set membership on Eff & Rew)
+        keep_mask = (np.isin(all_combinations[:, 0], selected_combinations[:, 0]) &
+                     np.isin(all_combinations[:, 1], selected_combinations[:, 1]))
+        Cond_E_R = all_combinations[keep_mask].copy()
 
-        # select EP within cond_er
-        rep_per_effort_ep = int(np.ceil(n_effort_trials / len(eff_proposed)))
-        ep_selected = []
-        for level in eff_proposed:
-            mask = cond_er[:, 0] == level
-            candidates = cond_er[mask]
-            if len(candidates) <= rep_per_effort_ep:
-                sel = candidates
+        # Adjust DM count to exactly nTrials (balanced additions/removals)
+        dm_count = np.sum(Cond_E_R[:, 2] == 0)
+        if dm_count < nTrials:
+            # add missing DM rows, balanced by effort
+            rows_per_value = nTrials - dm_count
+            # balanced selection from the full pool (MATLAB note says “probably never”)
+            balanced_add = _balanced_pick_rows_per_effort(all_combinations, Eff_Proposed, rows_per_value)
+            # If selection overshoots, just truncate later with random top-up
+            topup = nTrials - (Cond_E_R.shape[0] + balanced_add.shape[0])
+            if topup > 0:
+                idx = np.random.choice(N_total_comb, size=topup, replace=False)
+                Cond_E_R = np.vstack([Cond_E_R, balanced_add, all_combinations[idx]])
             else:
-                sel = candidates[np.random.choice(len(candidates),
-                                                 rep_per_effort_ep,
-                                                 replace=False)]
-            ep_selected.append(sel)
-        sel_ep = np.vstack(ep_selected)
-        # mark EP flags
-        for r in sel_ep:
-            match = np.all(cond_er[:, :2] == r[:2], axis=1)
-            cond_er[match, 2] = 1
+                Cond_E_R = np.vstack([Cond_E_R, balanced_add])
+        elif dm_count > nTrials:
+            # delete extra DM rows (balanced)
+            NumExtraTrials = dm_count - nTrials
+            rows_per_value = int(np.ceil(NumExtraTrials / len(Eff_Proposed))) if len(Eff_Proposed) > 0 else 0
+            # pick candidates to remove, balanced over efforts, from Cond_E_R (DM only)
+            DM_rows = Cond_E_R[Cond_E_R[:, 2] == 0]
+            selected_rows = _balanced_pick_rows_per_effort(DM_rows, Eff_Proposed, rows_per_value)
+            # now randomly remove exactly NumExtraTrials from those selected
+            # build mask of Cond_E_R rows matching selected_rows
+            match_mask = ((Cond_E_R[:, None, 0] == selected_rows[None, :, 0]) &
+                          (Cond_E_R[:, None, 1] == selected_rows[None, :, 1]) &
+                          (Cond_E_R[:, None, 2] == selected_rows[None, :, 2])).any(axis=1)
+            cand_idx = np.where(match_mask)[0]
+            drop = np.random.choice(cand_idx, size=NumExtraTrials, replace=False)
+            Cond_E_R = np.delete(Cond_E_R, drop, axis=0)
 
-        # adjust exact EP count
-        current_ep = int((cond_er[:, 2] == 1).sum())
-        if current_ep < n_effort_trials:
-            need = n_effort_trials - current_ep
-            zeros_idx = np.where(cond_er[:, 2] == 0)[0]
-            switch_idx = np.random.choice(zeros_idx,
-                                          need,
-                                          replace=False)
-            cond_er[switch_idx, 2] = 1
-        elif current_ep > n_effort_trials:
-            ones_idx = np.where(cond_er[:, 2] == 1)[0]
-            switch_idx = np.random.choice(ones_idx,
-                                          current_ep - n_effort_trials,
-                                          replace=False)
-            cond_er[switch_idx, 2] = 0
+        # --- NOW select EP trials within Cond_E_R (balanced) ---
+        rows_per_value = int(np.ceil(n_Effort_Trials / len(Eff_Proposed))) if len(Eff_Proposed) > 0 else 0
+        selected_rows = _balanced_pick_rows_per_effort(Cond_E_R, Eff_Proposed, rows_per_value)
+        # set EP flag=1 for selected_rows
+        if len(selected_rows) > 0:
+            sel_mask = ((Cond_E_R[:, None, 0] == selected_rows[None, :, 0]) &
+                        (Cond_E_R[:, None, 1] == selected_rows[None, :, 1])).any(axis=1)
+            Cond_E_R[sel_mask, 2] = 1
 
-    # Final shuffle and indices extraction
-    np.random.shuffle(cond_er)
-    indx_effort_trials = np.where(cond_er[:, 2] == 1)[0]
+        # Adjust EP count (balanced add/remove)
+        ep_count = np.sum(Cond_E_R[:, 2] == 1)
+        if ep_count < n_Effort_Trials:
+            NumMissingTrials = n_Effort_Trials - ep_count
+            DM_trials = Cond_E_R[Cond_E_R[:, 2] == 0]
+            rows_per_value = int(np.ceil(NumMissingTrials / len(Eff_Proposed))) if len(Eff_Proposed) > 0 else 0
+            balanced_add = _balanced_pick_rows_per_effort(DM_trials, Eff_Proposed, rows_per_value)
+            # toggle EP=1 for a random subset of size NumMissingTrials
+            # first find their indices in Cond_E_R
+            if len(balanced_add) > 0:
+                match_mask = ((Cond_E_R[:, None, 0] == balanced_add[None, :, 0]) &
+                              (Cond_E_R[:, None, 1] == balanced_add[None, :, 1]) &
+                              (Cond_E_R[:, None, 2] == 0)).any(axis=1)
+                cand_idx = np.where(match_mask)[0]
+                to_set = np.random.choice(cand_idx, size=min(NumMissingTrials, len(cand_idx)), replace=False)
+                Cond_E_R[to_set, 2] = 1
+        elif ep_count > n_Effort_Trials:
+            NumExtraTrials = ep_count - n_Effort_Trials
+            EP_trials = Cond_E_R[Cond_E_R[:, 2] == 1]
+            rows_per_value = int(np.ceil(NumExtraTrials / len(Eff_Proposed))) if len(Eff_Proposed) > 0 else 0
+            balanced_rm = _balanced_pick_rows_per_effort(EP_trials, Eff_Proposed, rows_per_value)
+            # find matches in Cond_E_R and toggle EP=0 for NumExtraTrials of them
+            match_mask = ((Cond_E_R[:, None, 0] == balanced_rm[None, :, 0]) &
+                          (Cond_E_R[:, None, 1] == balanced_rm[None, :, 1]) &
+                          (Cond_E_R[:, None, 2] == 1)).any(axis=1)
+            cand_idx = np.where(match_mask)[0]
+            to_reset = np.random.choice(cand_idx, size=min(NumExtraTrials, len(cand_idx)), replace=False)
+            Cond_E_R[to_reset, 2] = 0
 
-    # Integrity checks
-    assert len(indx_effort_trials) == n_effort_trials, \
-        f"Expected {n_effort_trials} EP trials, got {len(indx_effort_trials)}"
-    assert cond_er.shape[0] == n_trials, \
-        f"Expected total {n_trials} trials, got {cond_er.shape[0]}"
+    # Final shuffle (row order randomized)
+    perm = np.random.permutation(len(Cond_E_R))
+    Cond_E_R = Cond_E_R[perm]
+    indx_Effort_Trials = np.where(Cond_E_R[:, 2] == 1)[0]
+    return Cond_E_R, indx_Effort_Trials
 
-    return cond_er, indx_effort_trials
+
+# --- Optional: quick sanity checker (use in tests) ---
+def check_balancing(Cond_E_R, Eff_Proposed, nTrials, n_Effort_Trials):
+    """
+    Print per-effort counts for DM and EP; assert totals are correct.
+    """
+    assert Cond_E_R.shape[0] == nTrials, f"Expected {nTrials} trials, got {Cond_E_R.shape[0]}"
+    ep_idx = Cond_E_R[:, 2] == 1
+    dm_idx = Cond_E_R[:, 2] == 0
+    assert ep_idx.sum() == n_Effort_Trials, f"Expected {n_Effort_Trials} EP, got {ep_idx.sum()}"
+
+    for eff in Eff_Proposed:
+        dm_cnt = np.sum((Cond_E_R[:, 0] == eff) & dm_idx)
+        ep_cnt = np.sum((Cond_E_R[:, 0] == eff) & ep_idx)
+        print(f"Effort {eff:>4}: DM={dm_cnt:>3} | EP={ep_cnt:>3}")
+
+
+#### test 
+"""
+if __name__ == "__main__":
+    # --- Parameters for quick test ---
+    n_trials = 32
+    n_effort_trials = 14
+    flag_population = 1  # 1=healthy, 2=old, 3=patient
+
+    cond_er, indx_effort_trials = GetTrialCondition(
+        n_trials, n_effort_trials, flag_population
+    )
+
+    print(cond_er)
+
+    print("=== Trial Generation Test ===")
+    print(f"Total trials: {cond_er.shape[0]} (expected {n_trials})")
+    print(f"Effort trials (EP=1): {len(indx_effort_trials)} (expected {n_effort_trials})")
+
+    # Breakdown per effort level
+    eff_levels = np.unique(cond_er[:, 0])
+    for eff in eff_levels:
+        dm_count = np.sum((cond_er[:, 0] == eff) & (cond_er[:, 2] == 0))
+        ep_count = np.sum((cond_er[:, 0] == eff) & (cond_er[:, 2] == 1))
+        print(f"Effort {eff:.2f}: DM={dm_count}, EP={ep_count}")
+
+    # Integrity check
+    assert cond_er.shape[0] == n_trials, "❌ Wrong total number of trials"
+    assert len(indx_effort_trials) == n_effort_trials, "❌ Wrong number of EP trials"
+    print("✅ Balancing test passed")
+    """

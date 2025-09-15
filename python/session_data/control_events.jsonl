@@ -9660,3 +9660,169 @@
 {"trial": 3, "efftested": 0.8, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 19129.461181791, "t_recv": 19129.461918291}
 {"trial": 3, "durPrepDM [ms]": 1139, "t": 24.26968983333427, "event": "Preparation DM start", "proto": "v1", "t_send": 19131.48450225, "t_recv": 19131.485026333}
 {"trial": 3, "durPrepDM [ms]": 1139, "t": 24.26968983333427, "event": "Preparation DM start", "proto": "v1", "t_send": 19131.48450225, "t_recv": 19131.485026333}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 19818.07112075, "t_recv": 19818.074906458}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 19818.07112075, "t_recv": 19818.074906458}
+{"trial": 1, "efftested": 0.95, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 19818.073908916, "t_recv": 19818.07594525}
+{"trial": 1, "efftested": 0.95, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 19818.073908916, "t_recv": 19818.07594525}
+{"trial": 1, "durPrepDM [ms]": 1180, "t": 2.5423459583325894, "event": "Preparation DM start", "proto": "v1", "t_send": 19820.098683208, "t_recv": 19820.099226791}
+{"trial": 1, "durPrepDM [ms]": 1180, "t": 2.5423459583325894, "event": "Preparation DM start", "proto": "v1", "t_send": 19820.098683208, "t_recv": 19820.099226791}
+{"trial": 1, "t": 3.7420993333325896, "event": "Start DM", "proto": "v1", "t_send": 19821.298433, "t_recv": 19821.298955833}
+{"trial": 1, "t": 3.7420993333325896, "event": "Start DM", "proto": "v1", "t_send": 19821.298433, "t_recv": 19821.298955833}
+{"trial": 2, "efftested": 0.95, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 19825.297206291, "t_recv": 19825.297811708}
+{"trial": 2, "efftested": 0.95, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 19825.297206291, "t_recv": 19825.297811708}
+{"trial": 2, "durPrepDM [ms]": 1354, "t": 9.766450999999506, "event": "Preparation DM start", "proto": "v1", "t_send": 19827.322786791, "t_recv": 19827.323295458}
+{"trial": 2, "durPrepDM [ms]": 1354, "t": 9.766450999999506, "event": "Preparation DM start", "proto": "v1", "t_send": 19827.322786791, "t_recv": 19827.323295458}
+{"trial": 2, "t": 11.13696054166212, "event": "Start DM", "proto": "v1", "t_send": 19828.693293916, "t_recv": 19828.69380425}
+{"trial": 2, "t": 11.13696054166212, "event": "Start DM", "proto": "v1", "t_send": 19828.693293916, "t_recv": 19828.69380425}
+{"trial": 3, "efftested": 0.65, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 19832.684560375, "t_recv": 19832.686041333}
+{"trial": 3, "efftested": 0.65, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 19832.684560375, "t_recv": 19832.686041333}
+{"trial": 3, "durPrepDM [ms]": 1150, "t": 17.151173791662586, "event": "Preparation DM start", "proto": "v1", "t_send": 19834.707511083, "t_recv": 19834.708026041}
+{"trial": 3, "durPrepDM [ms]": 1150, "t": 17.151173791662586, "event": "Preparation DM start", "proto": "v1", "t_send": 19834.707511083, "t_recv": 19834.708026041}
+{"trial": 3, "t": 18.31818033333184, "event": "Start DM", "proto": "v1", "t_send": 19835.87451475, "t_recv": 19835.875108208}
+{"trial": 3, "t": 18.31818033333184, "event": "Start DM", "proto": "v1", "t_send": 19835.87451475, "t_recv": 19835.875108208}
+{"trial": 4, "efftested": 0.8, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 19839.869428125, "t_recv": 19839.870246958}
+{"trial": 4, "efftested": 0.8, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 19839.869428125, "t_recv": 19839.870246958}
+{"trial": 4, "durPrepDM [ms]": 1014, "t": 24.332662041662843, "event": "Preparation DM start", "proto": "v1", "t_send": 19841.888997416, "t_recv": 19841.889565958}
+{"trial": 4, "durPrepDM [ms]": 1014, "t": 24.332662041662843, "event": "Preparation DM start", "proto": "v1", "t_send": 19841.888997416, "t_recv": 19841.889565958}
+{"trial": 4, "t": 25.36122983333189, "event": "Start DM", "proto": "v1", "t_send": 19842.917563333, "t_recv": 19842.918049791}
+{"trial": 4, "t": 25.36122983333189, "event": "Start DM", "proto": "v1", "t_send": 19842.917563333, "t_recv": 19842.918049791}
+{"trial": 5, "efftested": 0.8, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 19846.913303166, "t_recv": 19846.914090708}
+{"trial": 5, "efftested": 0.8, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 19846.913303166, "t_recv": 19846.914090708}
+{"trial": 5, "durPrepDM [ms]": 1023, "t": 31.385291958329617, "event": "Preparation DM start", "proto": "v1", "t_send": 19848.941626958, "t_recv": 19848.942174541}
+{"trial": 5, "durPrepDM [ms]": 1023, "t": 31.385291958329617, "event": "Preparation DM start", "proto": "v1", "t_send": 19848.941626958, "t_recv": 19848.942174541}
+{"trial": 5, "t": 32.42272420833251, "event": "Start DM", "proto": "v1", "t_send": 19849.979057916, "t_recv": 19849.979531041}
+{"trial": 5, "t": 32.42272420833251, "event": "Start DM", "proto": "v1", "t_send": 19849.979057916, "t_recv": 19849.979531041}
+{"trial": 6, "efftested": 0.95, "rewtested": 10.0, "event": "trial_record", "proto": "v1", "t_send": 19853.98249325, "t_recv": 19853.983143416}
+{"trial": 6, "efftested": 0.95, "rewtested": 10.0, "event": "trial_record", "proto": "v1", "t_send": 19853.98249325, "t_recv": 19853.983143416}
+{"trial": 6, "durPrepDM [ms]": 1312, "t": 38.45034974999726, "event": "Preparation DM start", "proto": "v1", "t_send": 19856.0066875, "t_recv": 19856.007225166}
+{"trial": 6, "durPrepDM [ms]": 1312, "t": 38.45034974999726, "event": "Preparation DM start", "proto": "v1", "t_send": 19856.0066875, "t_recv": 19856.007225166}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 20112.605130916, "t_recv": 20112.609969833}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 20112.605130916, "t_recv": 20112.609969833}
+{"trial": 1, "efftested": 0.95, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 20112.607891166, "t_recv": 20112.611622208}
+{"trial": 1, "efftested": 0.95, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 20112.607891166, "t_recv": 20112.611622208}
+{"trial": 1, "durPrepDM [ms]": 1007, "t": 2.7526522083353484, "event": "Preparation DM start", "proto": "v1", "t_send": 20114.631432291, "t_recv": 20114.631971583}
+{"trial": 1, "durPrepDM [ms]": 1007, "t": 2.7526522083353484, "event": "Preparation DM start", "proto": "v1", "t_send": 20114.631432291, "t_recv": 20114.631971583}
+{"trial": 1, "t": 3.7748902499988617, "event": "Start DM", "proto": "v1", "t_send": 20115.653668375, "t_recv": 20115.654122458}
+{"trial": 1, "t": 3.7748902499988617, "event": "Start DM", "proto": "v1", "t_send": 20115.653668375, "t_recv": 20115.654122458}
+{"trial": 2, "efftested": 0.65, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 20119.645561791, "t_recv": 20119.646469041}
+{"trial": 2, "efftested": 0.65, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 20119.645561791, "t_recv": 20119.646469041}
+{"trial": 2, "durPrepDM [ms]": 1125, "t": 9.78812895833471, "event": "Preparation DM start", "proto": "v1", "t_send": 20121.66690825, "t_recv": 20121.667422583}
+{"trial": 2, "durPrepDM [ms]": 1125, "t": 9.78812895833471, "event": "Preparation DM start", "proto": "v1", "t_send": 20121.66690825, "t_recv": 20121.667422583}
+{"trial": 2, "t": 10.928086583335244, "event": "Start DM", "proto": "v1", "t_send": 20122.806864375, "t_recv": 20122.807362916}
+{"trial": 2, "t": 10.928086583335244, "event": "Start DM", "proto": "v1", "t_send": 20122.806864375, "t_recv": 20122.807362916}
+{"trial": 3, "efftested": 0.65, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 20126.804790416, "t_recv": 20126.805497166}
+{"trial": 3, "efftested": 0.65, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 20126.804790416, "t_recv": 20126.805497166}
+{"trial": 3, "durPrepDM [ms]": 1377, "t": 16.942464708336047, "event": "Preparation DM start", "proto": "v1", "t_send": 20128.821245666, "t_recv": 20128.821765416}
+{"trial": 3, "durPrepDM [ms]": 1377, "t": 16.942464708336047, "event": "Preparation DM start", "proto": "v1", "t_send": 20128.821245666, "t_recv": 20128.821765416}
+{"trial": 3, "t": 18.33883379166582, "event": "Start DM", "proto": "v1", "t_send": 20130.217612708, "t_recv": 20130.218621416}
+{"trial": 3, "t": 18.33883379166582, "event": "Start DM", "proto": "v1", "t_send": 20130.217612708, "t_recv": 20130.218621416}
+{"trial": 4, "efftested": 0.65, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 20134.211559791, "t_recv": 20134.2122695}
+{"trial": 4, "efftested": 0.65, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 20134.211559791, "t_recv": 20134.2122695}
+{"trial": 4, "durPrepDM [ms]": 1032, "t": 24.351749208333786, "event": "Preparation DM start", "proto": "v1", "t_send": 20136.23053025, "t_recv": 20136.231243083}
+{"trial": 4, "durPrepDM [ms]": 1032, "t": 24.351749208333786, "event": "Preparation DM start", "proto": "v1", "t_send": 20136.23053025, "t_recv": 20136.231243083}
+{"trial": 4, "t": 25.40190166666798, "event": "Start DM", "proto": "v1", "t_send": 20137.28068075, "t_recv": 20137.281194625}
+{"trial": 4, "t": 25.40190166666798, "event": "Start DM", "proto": "v1", "t_send": 20137.28068075, "t_recv": 20137.281194625}
+{"trial": 5, "efftested": 0.65, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 20141.2680975, "t_recv": 20141.268801916}
+{"trial": 5, "efftested": 0.65, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 20141.2680975, "t_recv": 20141.268801916}
+{"trial": 5, "durPrepDM [ms]": 1281, "t": 31.40620733333708, "event": "Preparation DM start", "proto": "v1", "t_send": 20143.284987583, "t_recv": 20143.285588541}
+{"trial": 5, "durPrepDM [ms]": 1281, "t": 31.40620733333708, "event": "Preparation DM start", "proto": "v1", "t_send": 20143.284987583, "t_recv": 20143.285588541}
+{"trial": 5, "t": 32.70248370833724, "event": "Start DM", "proto": "v1", "t_send": 20144.581261958, "t_recv": 20144.581743708}
+{"trial": 5, "t": 32.70248370833724, "event": "Start DM", "proto": "v1", "t_send": 20144.581261958, "t_recv": 20144.581743708}
+{"trial": 6, "efftested": 0.95, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 20148.569176083, "t_recv": 20148.569820875}
+{"trial": 6, "efftested": 0.95, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 20148.569176083, "t_recv": 20148.569820875}
+{"trial": 6, "durPrepDM [ms]": 1068, "t": 38.70661745833422, "event": "Preparation DM start", "proto": "v1", "t_send": 20150.5853975, "t_recv": 20150.5858965}
+{"trial": 6, "durPrepDM [ms]": 1068, "t": 38.70661745833422, "event": "Preparation DM start", "proto": "v1", "t_send": 20150.5853975, "t_recv": 20150.5858965}
+{"trial": 6, "t": 39.788267500000075, "event": "Start DM", "proto": "v1", "t_send": 20151.66704525, "t_recv": 20151.667553583}
+{"trial": 6, "t": 39.788267500000075, "event": "Start DM", "proto": "v1", "t_send": 20151.66704525, "t_recv": 20151.667553583}
+{"trial": 7, "efftested": 0.8, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 20155.661465375, "t_recv": 20155.662110083}
+{"trial": 7, "efftested": 0.8, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 20155.661465375, "t_recv": 20155.662110083}
+{"trial": 7, "durPrepDM [ms]": 1231, "t": 45.80312383333512, "event": "Preparation DM start", "proto": "v1", "t_send": 20157.681902833, "t_recv": 20157.682384333}
+{"trial": 7, "durPrepDM [ms]": 1231, "t": 45.80312383333512, "event": "Preparation DM start", "proto": "v1", "t_send": 20157.681902833, "t_recv": 20157.682384333}
+{"trial": 7, "t": 47.053583958335366, "event": "Start DM", "proto": "v1", "t_send": 20158.932362958, "t_recv": 20158.932855041}
+{"trial": 7, "t": 47.053583958335366, "event": "Start DM", "proto": "v1", "t_send": 20158.932362958, "t_recv": 20158.932855041}
+{"trial": 8, "efftested": 0.5, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 20162.923906833, "t_recv": 20162.924527333}
+{"trial": 8, "efftested": 0.5, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 20162.923906833, "t_recv": 20162.924527333}
+{"trial": 8, "durPrepDM [ms]": 1377, "t": 53.06112275000123, "event": "Preparation DM start", "proto": "v1", "t_send": 20164.939901916, "t_recv": 20164.94039225}
+{"trial": 8, "durPrepDM [ms]": 1377, "t": 53.06112275000123, "event": "Preparation DM start", "proto": "v1", "t_send": 20164.939901916, "t_recv": 20164.94039225}
+{"trial": 8, "t": 54.45382770833385, "event": "Start DM", "proto": "v1", "t_send": 20166.332606541, "t_recv": 20166.333158958}
+{"trial": 8, "t": 54.45382770833385, "event": "Start DM", "proto": "v1", "t_send": 20166.332606541, "t_recv": 20166.333158958}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 46994.284653125, "t_recv": 46994.291057}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 46994.284653125, "t_recv": 46994.291057}
+{"trial": 1, "efftested": 0.65, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 46994.287708916, "t_recv": 46994.292121833}
+{"trial": 1, "efftested": 0.65, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 46994.287708916, "t_recv": 46994.292121833}
+{"trial": 1, "durPrepDM [ms]": 1183, "t": 4.285196166660171, "event": "Preparation DM start", "proto": "v1", "t_send": 46996.312062208, "t_recv": 46996.312598375}
+{"trial": 1, "durPrepDM [ms]": 1183, "t": 4.285196166660171, "event": "Preparation DM start", "proto": "v1", "t_send": 46996.312062208, "t_recv": 46996.312598375}
+{"trial": 1, "t": 5.483227374999842, "event": "Start DM", "proto": "v1", "t_send": 46997.510091041, "t_recv": 46997.510531625}
+{"trial": 1, "t": 5.483227374999842, "event": "Start DM", "proto": "v1", "t_send": 46997.510091041, "t_recv": 46997.510531625}
+{"trial": 1, "choice": 1, "t": 5.784360208337603, "event": "Decision", "proto": "v1", "t_send": 46997.811226375, "t_recv": 46997.811894916}
+{"trial": 1, "choice": 1, "t": 5.784360208337603, "event": "Decision", "proto": "v1", "t_send": 46997.811226375, "t_recv": 46997.811894916}
+{"trial": 2, "efftested": 0.65, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 46998.771114375, "t_recv": 46998.771785041}
+{"trial": 2, "efftested": 0.65, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 46998.771114375, "t_recv": 46998.771785041}
+{"trial": 2, "durPrepDM [ms]": 1362, "t": 8.76295116666006, "event": "Preparation DM start", "proto": "v1", "t_send": 47000.789818041, "t_recv": 47000.790286666}
+{"trial": 2, "durPrepDM [ms]": 1362, "t": 8.76295116666006, "event": "Preparation DM start", "proto": "v1", "t_send": 47000.789818041, "t_recv": 47000.790286666}
+{"trial": 2, "t": 10.142334374999336, "event": "Start DM", "proto": "v1", "t_send": 47002.169198291, "t_recv": 47002.169664041}
+{"trial": 2, "t": 10.142334374999336, "event": "Start DM", "proto": "v1", "t_send": 47002.169198291, "t_recv": 47002.169664041}
+{"trial": 2, "choice": 1, "t": 10.1755194166617, "event": "Decision", "proto": "v1", "t_send": 47002.202383, "t_recv": 47002.202870541}
+{"trial": 2, "choice": 1, "t": 10.1755194166617, "event": "Decision", "proto": "v1", "t_send": 47002.202383, "t_recv": 47002.202870541}
+{"trial": 3, "efftested": 0.95, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 47003.210018291, "t_recv": 47003.212192166}
+{"trial": 3, "efftested": 0.95, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 47003.210018291, "t_recv": 47003.212192166}
+{"trial": 3, "durPrepDM [ms]": 1165, "t": 13.214804625000397, "event": "Preparation DM start", "proto": "v1", "t_send": 47005.241669791, "t_recv": 47005.242452791}
+{"trial": 3, "durPrepDM [ms]": 1165, "t": 13.214804625000397, "event": "Preparation DM start", "proto": "v1", "t_send": 47005.241669791, "t_recv": 47005.242452791}
+{"trial": 3, "t": 14.39502204166638, "event": "Start DM", "proto": "v1", "t_send": 47006.421885833, "t_recv": 47006.422359125}
+{"trial": 3, "t": 14.39502204166638, "event": "Start DM", "proto": "v1", "t_send": 47006.421885833, "t_recv": 47006.422359125}
+{"trial": 3, "choice": 1, "t": 14.628719250002177, "event": "Decision", "proto": "v1", "t_send": 47006.655583625, "t_recv": 47006.656120625}
+{"trial": 3, "choice": 1, "t": 14.628719250002177, "event": "Decision", "proto": "v1", "t_send": 47006.655583625, "t_recv": 47006.656120625}
+{"trial": 4, "efftested": 0.65, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 47007.65680275, "t_recv": 47007.657401875}
+{"trial": 4, "efftested": 0.65, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 47007.65680275, "t_recv": 47007.657401875}
+{"trial": 4, "durPrepDM [ms]": 1181, "t": 17.650229624996427, "event": "Preparation DM start", "proto": "v1", "t_send": 47009.677094916, "t_recv": 47009.677580375}
+{"trial": 4, "durPrepDM [ms]": 1181, "t": 17.650229624996427, "event": "Preparation DM start", "proto": "v1", "t_send": 47009.677094916, "t_recv": 47009.677580375}
+{"trial": 4, "t": 18.84709799999837, "event": "Start DM", "proto": "v1", "t_send": 47010.873962166, "t_recv": 47010.87448075}
+{"trial": 4, "t": 18.84709799999837, "event": "Start DM", "proto": "v1", "t_send": 47010.873962166, "t_recv": 47010.87448075}
+{"trial": 4, "choice": 1, "t": 19.06980470833514, "event": "Decision", "proto": "v1", "t_send": 47011.096670416, "t_recv": 47011.097253291}
+{"trial": 4, "choice": 1, "t": 19.06980470833514, "event": "Decision", "proto": "v1", "t_send": 47011.096670416, "t_recv": 47011.097253291}
+{"trial": 5, "efftested": 0.65, "rewtested": 10.0, "event": "trial_record", "proto": "v1", "t_send": 47012.084102875, "t_recv": 47012.084776708}
+{"trial": 5, "efftested": 0.65, "rewtested": 10.0, "event": "trial_record", "proto": "v1", "t_send": 47012.084102875, "t_recv": 47012.084776708}
+{"trial": 5, "durPrepDM [ms]": 1369, "t": 22.080102083338716, "event": "Preparation DM start", "proto": "v1", "t_send": 47014.106969166, "t_recv": 47014.107545083}
+{"trial": 5, "durPrepDM [ms]": 1369, "t": 22.080102083338716, "event": "Preparation DM start", "proto": "v1", "t_send": 47014.106969166, "t_recv": 47014.107545083}
+{"trial": 5, "t": 23.464982458332088, "event": "Start DM", "proto": "v1", "t_send": 47015.491847666, "t_recv": 47015.492428458}
+{"trial": 5, "t": 23.464982458332088, "event": "Start DM", "proto": "v1", "t_send": 47015.491847666, "t_recv": 47015.492428458}
+{"trial": 5, "choice": 0, "t": 23.53750245833362, "event": "Decision", "proto": "v1", "t_send": 47015.564366708, "t_recv": 47015.564931666}
+{"trial": 5, "choice": 0, "t": 23.53750245833362, "event": "Decision", "proto": "v1", "t_send": 47015.564366708, "t_recv": 47015.564931666}
+{"trial": 6, "efftested": 0.95, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 47016.556660166, "t_recv": 47016.557391458}
+{"trial": 6, "efftested": 0.95, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 47016.556660166, "t_recv": 47016.557391458}
+{"trial": 6, "durPrepDM [ms]": 1150, "t": 26.56329937499686, "event": "Preparation DM start", "proto": "v1", "t_send": 47018.590163625, "t_recv": 47018.590644833}
+{"trial": 6, "durPrepDM [ms]": 1150, "t": 26.56329937499686, "event": "Preparation DM start", "proto": "v1", "t_send": 47018.590163625, "t_recv": 47018.590644833}
+{"trial": 6, "t": 27.72910537500138, "event": "Start DM", "proto": "v1", "t_send": 47019.755969, "t_recv": 47019.756440333}
+{"trial": 6, "t": 27.72910537500138, "event": "Start DM", "proto": "v1", "t_send": 47019.755969, "t_recv": 47019.756440333}
+{"trial": 6, "choice": 1, "t": 27.74292662499647, "event": "Decision", "proto": "v1", "t_send": 47019.769790666, "t_recv": 47019.770277208}
+{"trial": 6, "choice": 1, "t": 27.74292662499647, "event": "Decision", "proto": "v1", "t_send": 47019.769790666, "t_recv": 47019.770277208}
+{"trial": 7, "efftested": 0.8, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 47020.763449291, "t_recv": 47020.76417225}
+{"trial": 7, "efftested": 0.8, "rewtested": 20.0, "event": "trial_record", "proto": "v1", "t_send": 47020.763449291, "t_recv": 47020.76417225}
+{"trial": 7, "durPrepDM [ms]": 1279, "t": 30.763430333332508, "event": "Preparation DM start", "proto": "v1", "t_send": 47022.790296666, "t_recv": 47022.790841791}
+{"trial": 7, "durPrepDM [ms]": 1279, "t": 30.763430333332508, "event": "Preparation DM start", "proto": "v1", "t_send": 47022.790296666, "t_recv": 47022.790841791}
+{"trial": 7, "t": 32.05826129166235, "event": "Start DM", "proto": "v1", "t_send": 47024.085125125, "t_recv": 47024.086455458}
+{"trial": 7, "t": 32.05826129166235, "event": "Start DM", "proto": "v1", "t_send": 47024.085125125, "t_recv": 47024.086455458}
+{"trial": 7, "choice": 1, "t": 32.302228458334866, "event": "Decision", "proto": "v1", "t_send": 47024.329092916, "t_recv": 47024.329711958}
+{"trial": 7, "choice": 1, "t": 32.302228458334866, "event": "Decision", "proto": "v1", "t_send": 47024.329092916, "t_recv": 47024.329711958}
+{"trial": 8, "efftested": 0.95, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 47025.320253041, "t_recv": 47025.320831083}
+{"trial": 8, "efftested": 0.95, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 47025.320253041, "t_recv": 47025.320831083}
+{"trial": 8, "durPrepDM [ms]": 1277, "t": 35.31362104166328, "event": "Preparation DM start", "proto": "v1", "t_send": 47027.340485208, "t_recv": 47027.340967666}
+{"trial": 8, "durPrepDM [ms]": 1277, "t": 35.31362104166328, "event": "Preparation DM start", "proto": "v1", "t_send": 47027.340485208, "t_recv": 47027.340967666}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 48257.10342275, "t_recv": 48257.108364458}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 48257.10342275, "t_recv": 48257.108364458}
+{"trial": 1, "efftested": 0.95, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 48257.10674, "t_recv": 48257.110192458}
+{"trial": 1, "efftested": 0.95, "rewtested": 1.0, "event": "trial_record", "proto": "v1", "t_send": 48257.10674, "t_recv": 48257.110192458}
+{"trial": 1, "durPrepDM [ms]": 1372, "t": 4.265306291665183, "event": "Preparation DM start", "proto": "v1", "t_send": 48259.130664958, "t_recv": 48259.131195166}
+{"trial": 1, "durPrepDM [ms]": 1372, "t": 4.265306291665183, "event": "Preparation DM start", "proto": "v1", "t_send": 48259.130664958, "t_recv": 48259.131195166}
+{"trial": 1, "t": 5.653368291663355, "event": "Start DM", "proto": "v1", "t_send": 48260.518723833, "t_recv": 48260.519216208}
+{"trial": 1, "t": 5.653368291663355, "event": "Start DM", "proto": "v1", "t_send": 48260.518723833, "t_recv": 48260.519216208}
+{"trial": 1, "choice": 0, "t": 8.403676249996352, "event": "Decision", "proto": "v1", "t_send": 48263.269036333, "t_recv": 48263.269913125}
+{"trial": 1, "choice": 0, "t": 8.403676249996352, "event": "Decision", "proto": "v1", "t_send": 48263.269036333, "t_recv": 48263.269913125}
+{"trial": 2, "efftested": 0.8, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 48264.254060333, "t_recv": 48264.25474225}
+{"trial": 2, "efftested": 0.8, "rewtested": 5.0, "event": "trial_record", "proto": "v1", "t_send": 48264.254060333, "t_recv": 48264.25474225}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 48345.370219583, "t_recv": 48345.374580666}
+{"durBlank1": 2000, "durDM": 4000, "durTimeAfterDmade": 1000, "durTimeAfterPositionRight": 1000, "durReadyEP": 1000, "durEffortProduction": 8000, "durBlank2": 500, "durFeedback": 1000, "durPupilBaselineBack": 2000, "durFinalFeedback": 4000, "durStartBlock": 500, "event": "Constant durations [ms]", "proto": "v1", "t_send": 48345.370219583, "t_recv": 48345.374580666}
+{"trial": 1, "efftested": 0.8, "rewtested": 10.0, "event": "trial_record", "proto": "v1", "t_send": 48345.373344333, "t_recv": 48345.376279416}
+{"trial": 1, "efftested": 0.8, "rewtested": 10.0, "event": "trial_record", "proto": "v1", "t_send": 48345.373344333, "t_recv": 48345.376279416}
+{"trial": 1, "durPrepDM [ms]": 1276, "t": 4.28483729166328, "event": "Preparation DM start", "proto": "v1", "t_send": 48347.39595825, "t_recv": 48347.396455958}
+{"trial": 1, "durPrepDM [ms]": 1276, "t": 4.28483729166328, "event": "Preparation DM start", "proto": "v1", "t_send": 48347.39595825, "t_recv": 48347.396455958}

@@ -35,6 +35,10 @@ def parse_args():
         help="Type of stimulation (e.g., none, tms)"
     )
 
+    parser.add_argument(
+        "-mtf", "--MTF", type=int, required=True,
+        help="Participant maximum taping frequency"
+    )
     # --- Design parameters ---
     parser.add_argument(
         "-n", "--nTrials", type=int, default=32,

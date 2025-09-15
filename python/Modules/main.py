@@ -15,6 +15,8 @@ from keyboard import init_keyboard, poll_keys, clear_events, QuitSignal
 from ws_stream import TrialStreamer
 import logging
 import traceback
+import tempfile
+import shutil
 
 # --- Helper: wait while still catching ESC (polling) ---
 def wait_with_escape(seconds, kb, io):
@@ -23,37 +25,6 @@ def wait_with_escape(seconds, kb, io):
     while core.getTime() < end_t:
         _ = poll_keys(kb, io)  # ensures QuitSignal can propagate
         core.wait(0.001)
-
-def calibration(win, screens, kb, io, expClock):
-    """Quick tapping calibration: counts taps on 'lctrl' over 3 s and derives GV."""
-    clock = core.Clock()
-    t0 = clock.getTime()
-    t1 = 0
-    endTime = 3000  # ms
-    tap_key = 'lctrl'
-    count = 0
-
-    while clock.getTime() - t0 < endTime / 1000:
-        _ = poll_keys(kb, io)  # catch ESC early
-        for elem in screens.bCalib:
-            elem.draw()
-        win.flip()
-
-        events = poll_keys(kb, io)
-        for ev in events:
-            key_name = ev.key if hasattr(ev, 'key') else ev
-            if key_name == tap_key and ev.type == 22 and t1 == 0:
-                count += 1
-                t1 = clock.getTime()
-            elif key_name == tap_key and ev.type == 22 and t1 != 0:
-                count += 1
-            elif key_name == 'escape':
-                win.close()
-                core.quit()
-
-    GV = count / (endTime / 1000 - t1) * 0.95
-    print(f' GV : {GV}')
-    return GV
 
 def save_and_quit(
     win,
@@ -64,30 +35,63 @@ def save_and_quit(
     keypr,
     TaskTimings,
     Hz,
-    GV,
+    MTF,
     trials=None,
     all_fmt="xlsx",   # choose: "csv" | "xlsx" | "mat"
     csv_mode="long",  # currently only "long" is implemented
+    mode=None,        
+    durations=None,    
 ):
-    """Centralized save & shutdown (always attempts to save, then closes window and quits)."""
+    """
+    Centralized save & shutdown.
+    - Tries to save in `outdir`.
+    - If it fails (permissions, invalid path, etc.), fallback to a safe temp dir.
+    - Always closes the window and quits PsychoPy.
+    """
+    save_path = None
     try:
-        os.makedirs(outdir, exist_ok=True)
-        rec.save_all(
-            fmt=all_fmt,
-            trials_df=trials,
-            cursor=CURSOR,
-            keypr=keypr,
-            tasktimings=TaskTimings,
-            Hz=Hz,
-            GV=GV,
-            csv_mode=csv_mode,
-        )
+        try:
+            os.makedirs(outdir, exist_ok=True)
+            save_path = rec.save_all(
+                fmt=all_fmt,
+                trials_df=trials,
+                cursor=CURSOR,
+                keypr=keypr,
+                tasktimings=TaskTimings,
+                Hz=Hz,
+                MTF=MTF,
+                csv_mode=csv_mode,
+                mode=mode,                
+                durations=durations, 
+            )
+        except Exception as e:
+            logging.error(f"❌ Failed to save in {outdir}: {e}")
+            fallback_dir = Path("./session_data_fallback")
+            try:
+                fallback_dir.mkdir(parents=True, exist_ok=True)
+                logging.warning(f"⚠️ Falling back to {fallback_dir}")
+                # Create a temporary recorder in fallback dir
+                fb_rec = DataRecorder(output_dir=str(fallback_dir), prefix=prefix)
+                save_path = fb_rec.save_all(
+                    fmt=all_fmt,
+                    trials_df=trials,
+                    cursor=CURSOR,
+                    keypr=keypr,
+                    tasktimings=TaskTimings,
+                    Hz=Hz,
+                    MTF=MTF,
+                    csv_mode=csv_mode,
+                )
+            except Exception as e2:
+                logging.critical(f"🚨 Failed to save even in fallback dir: {e2}")
     finally:
         try:
             if win:
                 win.close()
         finally:
             core.quit()
+    return save_path
+
 
 if __name__ == "__main__":
     # --- Configuration and sanity checks ---
@@ -124,13 +128,14 @@ if __name__ == "__main__":
         gain_screen = 1
 
     screens = Screens(win, gain_screen=gain_screen, lang=cfg.language)
-    kb, io = init_keyboard(use_iohub=True)
+    kb, io = init_keyboard()
     expClock = core.Clock()
 
     TotalGain = 0
     TaskTimings = []
-    GV = 7  # keep fixed unless enabling calibration()
-    Hz = 60
+    MTF = cfg.MTF
+    Hz = win.getActualFrameRate(nIdentical=20, nMaxFrames=200, nWarmUpFrames=10, threshold=1)
+    if Hz is None : Hz = 60
 
     CURSOR, nFrames = init_cursor_matrix(dur["Task"], Hz, cfg.nTrials)
     keypr = np.full((nFrames, cfg.nTrials), np.nan, dtype=float)
@@ -181,7 +186,7 @@ if __name__ == "__main__":
             if i in indx_effort_trials and trials.loc[i, 'Acceptance'] == 1:
                 effort_phase(
                     streamer,
-                    i, win, screens, kb, io, expClock, dur, GV, Hz,
+                    i, win, screens, kb, io, expClock, dur, MTF, Hz,
                     trials, CURSOR, TaskTimings, keypr,
                     flag_MultipleKeyPressed, KEYBOARD_MODE=True
                 )
@@ -189,9 +194,10 @@ if __name__ == "__main__":
                 if trials.loc[i, 'Anticipation_EP'] == 0:
                     TotalGain += trials.loc[i, 'reward'] * trials.loc[i, 'success']
 
-            # --- Record enriched trial row (Hz, GV) ---
+            # --- Record enriched trial row (Hz, MTF) ---
             trial_dict = trials.loc[i].to_dict()
-            trial_dict.update({"Hz": Hz, "GV": GV})
+            trial_dict.update({"Hz": Hz, "MTF": MTF, "mode": cfg.mode})
+            trial_dict.update({f"dur_{k}": v for k, v in dur.items()})
             rec.add_trial(trial_dict)
 
         # --- Final feedback UI ---
@@ -227,7 +233,9 @@ if __name__ == "__main__":
             keypr=keypr,
             TaskTimings=TaskTimings,
             Hz=Hz,
-            GV=GV,
+            MTF=MTF,
             trials=trials,
-            all_fmt="xlsx",  # or "mat" or "csv"
+            all_fmt="mat",  # or "mat" or "csv"
+            mode=cfg.mode,     
+            durations=dur,      
         )

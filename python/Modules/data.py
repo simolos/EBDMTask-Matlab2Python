@@ -3,6 +3,46 @@ import os
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from collections.abc import Sequence
+
+def _inject_mode_and_durations(trials_df, mode=None, durations=None):
+    """
+    Return a copy of trials_df with extra columns:
+      - 'mode' if provided
+      - 'dur_<key>' for numeric durations
+      - 'dur_<key>_lo' and 'dur_<key>_hi' if durations[key] is a 2-length sequence
+      - otherwise stringify into 'dur_<key>_str'
+    """
+    if trials_df is None:
+        return None
+
+    df = trials_df.copy()
+
+    if mode is not None:
+        try:
+            df["mode"] = int(mode)
+        except Exception:
+            df["mode"] = mode  # keep as-is if not castable
+
+    if durations:
+        for k, v in durations.items():
+            col_base = f"dur_{k}"
+            try:
+                # numeric scalar
+                if isinstance(v, (int, float, np.integer, np.floating)):
+                    df[col_base] = int(v)
+                # 2-length sequence (e.g., [min, max])
+                elif isinstance(v, Sequence) and not isinstance(v, (str, bytes)) and len(v) == 2:
+                    lo, hi = v[0], v[1]
+                    df[f"{col_base}_lo"] = lo if isinstance(lo, (int, float, np.integer, np.floating)) else str(lo)
+                    df[f"{col_base}_hi"] = hi if isinstance(hi, (int, float, np.integer, np.floating)) else str(hi)
+                else:
+                    # fallback: store a string
+                    df[f"{col_base}_str"] = str(v)
+            except Exception:
+                df[f"{col_base}_str"] = str(v)
+    return df
+
 
 # Optional: for .mat export
 try:
@@ -65,8 +105,10 @@ class DataRecorder:
         keypr: np.ndarray,
         tasktimings: list | pd.DataFrame | None,
         Hz: float | None,
-        GV: float | None,
-        csv_mode: str = "long",   # "long" merges per-frame + per-trial
+        MTF: float | None,
+        csv_mode: str = "long",
+        mode: int | None = None,                 # <<< NEW
+        durations: dict | None = None,           # <<< NEW
     ) -> str:
         """
         Save everything (trials + CURSOR + KEYPR + TaskTimings + meta) into ONE file.
@@ -79,10 +121,14 @@ class DataRecorder:
         # Use provided trials_df or the accumulated records
         if trials_df is None:
             trials_df = pd.DataFrame(self.records)
+
         # Ensure there is a 'trial' column (1..nT) for joins
         if 'trial' not in trials_df.columns:
             trials_df = trials_df.copy()
             trials_df['trial'] = np.arange(1, nT + 1, dtype=int)
+
+        # <<< Inject mode + durations into the per-trial table
+        trials_df = _inject_mode_and_durations(trials_df, mode=mode, durations=durations)
 
         if fmt.lower() == "xlsx":
             path = self._get_filename('xlsx')
@@ -103,16 +149,16 @@ class DataRecorder:
                 meta = pd.DataFrame([{
                     "prefix": self.prefix,
                     "Hz": float(Hz) if Hz is not None else None,
-                    "GV": float(GV) if GV is not None else None,
+                    "MTF": float(MTF) if MTF is not None else None,
                     "nFrames": int(nF),
                     "nTrials": int(nT),
+                    "mode": int(mode) if mode is not None else None,   # optional duplicate in meta
                 }])
                 meta.to_excel(xl, sheet_name="meta", index=False)
             print(f"All data saved to XLSX: {path}")
             return path
 
         elif fmt.lower() == "csv":
-            # Build long framewise table and merge trials info → one big CSV
             if Hz is None:
                 raise ValueError("Hz is required for CSV long export.")
             trial_idx = np.repeat(np.arange(1, nT+1), nF)
@@ -122,7 +168,7 @@ class DataRecorder:
                 "trial":  trial_idx,
                 "frame":  frame_idx,
                 "time_s": time_s,
-                "cursor": cursor.flatten(order="F"),  # preserve [f,i] column-major
+                "cursor": cursor.flatten(order="F"),
                 "keypr":  keypr.flatten(order="F"),
             })
             # Merge per-trial columns (duplicated along frames)
@@ -140,10 +186,10 @@ class DataRecorder:
                 "CURSOR": cursor,
                 "KEYPR":  keypr,
                 "Hz":     float(Hz) if Hz is not None else None,
-                "GV":     float(GV) if GV is not None else None,
+                "MTF":     float(MTF) if MTF is not None else None,
                 "prefix": self.prefix,
-                # trials as dict of arrays (MATLAB-friendly)
                 "trials": {col: trials_df[col].to_numpy() for col in trials_df.columns},
+                "mode":   int(mode) if mode is not None else None,
             }
             if tasktimings:
                 if isinstance(tasktimings, pd.DataFrame):
