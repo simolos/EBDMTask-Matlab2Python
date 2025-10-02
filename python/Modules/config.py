@@ -20,9 +20,23 @@ def parse_args():
         "-b", "--block-id", type=str, required=True,
         help="Block identifier"
     )
+
+    parser.add_argument(
+        "-mtf", "--MTF", type=int, required=True,
+        help="Participant maximum taping frequency"
+    )
+
     parser.add_argument(
         "-o", "--output_dir", default="results",
         help="Directory where logs/files are written"
+    )
+
+    # --- Websocket streaming ---
+    parser.add_argument(
+        "-ws", "--ws_streaming", type=str,
+        choices=["true", "false"],
+        default="false",
+        help="Enable or disable Websocket streaming (default: false)"
     )
 
     # --- Localization and stimulation ---
@@ -35,10 +49,6 @@ def parse_args():
         help="Type of stimulation (e.g., none, tms)"
     )
 
-    parser.add_argument(
-        "-mtf", "--MTF", type=int, required=True,
-        help="Participant maximum taping frequency"
-    )
     # --- Design parameters ---
     parser.add_argument(
         "-n", "--nTrials", type=int, default=32,

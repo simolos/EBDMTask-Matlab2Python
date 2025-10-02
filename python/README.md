@@ -1,23 +1,41 @@
 
 # Installation
 
+Open VSC and cd to /EBDMTask-Matlab2Python
+
 Python environment:
-  - Use Python 3.10 or 3.11 for compatibility with PsychoPy 2023.2
-  - Create a virtual environment before installing dependencies:
+	- Use Python 3.10 or 3.11 for compatibility with PsychoPy 2023.2 --> brew install python@3.11
 
-    Linux / macOS:
-      python -m venv venv
-      source venv/bin/activate
+		Check installed version by running in the terminal: python3 --version 
 
-    Windows:
-      python -m venv venv
-      venv\Scripts\activate
+  	- Create a virtual environment before installing dependencies:
+
+    		Linux / macOS:
+      			python3.11 -m venv venv
+      			source venv/bin/activate
+
+		(if you already have a venv folder in your path, you only need to activate)
+
+    		Windows:
+      			python -m venv venv
+      			venv\Scripts\activate
+
+
+	- Upgrade pip, setuptools, and wheel:
+
+		pip install --upgrade pip setuptools wheel
+
 
 Dependencies:
-  - All required packages are listed in requirements.txt
-  - Install them with:
+  	- All required packages are listed in requirements.txt
+  	- Install them by running in the terminal:
 
-      pip install -r requirements.txt
+		pip install -r python/requirements.txt
+
+	- Check with 
+		pip show psychopy
+
+
 
 PsychoPy and IOHub:
   - This project depends on PsychoPy with IOHub enabled for precise keyboard handling.
@@ -25,7 +43,7 @@ PsychoPy and IOHub:
   - On some systems, IOHub requires extra configuration:
 
     macOS:
-      - Grant Accessibility permissions to PsychoPy in System Preferences.
+      - Grant Accessibility permissions to PsychoPy in System Preferences (System Settings > Privacy & Security > Accessibility > + > ".../venv/bin/psychopy)
 
     Linux:
       - You may need elevated privileges if the OS restricts access to low-level input devices.
@@ -50,7 +68,7 @@ Entry point:
 
 Basic command:
   - Syntax:
-      python main.py -s <SUBJECT_ID> -b <BLOCK_ID> [options...]
+      python main.py -s <SUBJECT_ID> -b <BLOCK_ID> -mtf <MTF>[options...]
 
 Mandatory arguments:
   - -s, --subject-id (str):
@@ -59,6 +77,15 @@ Mandatory arguments:
   - -b, --block-id (str):
       Description: Block identifier for the session.
       Example: B1
+
+  - -mtf, --MTF (int):
+      Description: Maximum Tapping Frequency of the participant (from calibration)
+
+Output info (websocket, triggerDBS, triggerTI, ...)
+  - -ws, --ws_streaming (str):
+      Choices: {"true"; "false"}
+      Default: "false"
+      Description: enable streaming through websocket 
 
 Core options (CLI):
   - -n, --nTrials (int):
@@ -157,7 +184,7 @@ Output behavior (where files go and when they are written):
   - Timing: Data is written once at the end of the run or upon clean quit handling.
   - Format: By default main.py calls DataRecorder.save_all(..., fmt="xlsx"). To change to "csv" or "mat", edit the save_and_quit(...) call in main.py (parameter all_fmt).
 
-WebSocket streaming (optional but enabled by default in code):
+WebSocket streaming (optional):
   - Client: ws_stream.TrialStreamer
   - Default URI: ws://127.0.0.1:8765/trials (hardcoded in main.py)
   - Requirement: If no server is listening at that URI, connection may fail during startup.

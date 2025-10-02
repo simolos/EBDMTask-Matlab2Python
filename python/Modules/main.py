@@ -2,6 +2,7 @@
 # Purpose: Run the full EBDM-like task (decision + effort), handle timing, saving, and websocket streaming.
 
 from psychopy import core, visual, monitors
+
 from data import DataRecorder
 import numpy as np
 import os
@@ -111,12 +112,15 @@ if __name__ == "__main__":
     cond_er, indx_effort_trials = GetTrialCondition(cfg.nTrials, cfg.nEffortTrials, cfg.population)
     trials = init_trials(cfg.nTrials, cond_er, dur["DM_Preparation"], dur["EP_Preparation"])
 
-    # --- Recorder / streamer setup ---
+    # --- Recorder setup ---
     prefix = f"{cfg.subject_id}_{cfg.block_id}"
     rec = DataRecorder(output_dir=cfg.output_dir, prefix=prefix)
 
-    streamer = TrialStreamer("ws://127.0.0.1:8765/trials")
-    streamer.start()
+    # --- Websocket setup ---
+    streamer = None
+    if cfg.ws_streaming.lower() == "true":
+        streamer = TrialStreamer("ws://127.0.0.1:8765/trials")
+        streamer.start()
 
     # --- PsychoPy window ---
     mon = monitors.Monitor('MyMonitor')
@@ -147,22 +151,23 @@ if __name__ == "__main__":
     wait_with_escape(dur.get('StartBlock', 500) / 1000.0, kb, io)
 
     # --- Constant durations to server (small JSON) ---
-    streamer.send_event(
-        "Constant durations [ms]",
-        {
-            "durBlank1": dur["Blank1"],
-            "durDM": dur["DM"],
-            "durTimeAfterDmade": dur["TimeAfterDMade"],
-            "durTimeAfterPositionRight": dur["TimeAfterPositionRight"],
-            "durReadyEP": dur["GetReadyForEP"],
-            "durEffortProduction": dur["Task"],
-            "durBlank2": dur["Blank2"],
-            "durFeedback": dur["Reward"],
-            "durPupilBaselineBack": dur["TimeForPupilBaselineBack"],
-            "durFinalFeedback": dur["FinalFeedback"],
-            "durStartBlock": dur["StartBlock"],
-        },
-    )
+    if streamer is not None:
+        streamer.send_event(
+            "Constant durations [ms]",
+            {
+                "durBlank1": dur["Blank1"],
+                "durDM": dur["DM"],
+                "durTimeAfterDmade": dur["TimeAfterDMade"],
+                "durTimeAfterPositionRight": dur["TimeAfterPositionRight"],
+                "durReadyEP": dur["GetReadyForEP"],
+                "durEffortProduction": dur["Task"],
+                "durBlank2": dur["Blank2"],
+                "durFeedback": dur["Reward"],
+                "durPupilBaselineBack": dur["TimeForPupilBaselineBack"],
+                "durFinalFeedback": dur["FinalFeedback"],
+                "durStartBlock": dur["StartBlock"],
+            },
+        )
 
     try:
         for i in range(cfg.nTrials):
@@ -171,7 +176,9 @@ if __name__ == "__main__":
             rec.add_trial(trial_dict)
             include = ["trial", "efftested", "rewtested"]
             payload = trial_row_payload(trials, i, include, drop_none=True)
-            streamer.send_event("trial_record", payload)
+
+            if streamer is not None:
+                streamer.send_event("trial_record", payload)
 
             # --- Inter-trial cross ---
             for elem in screens.bRectCross:
@@ -180,7 +187,9 @@ if __name__ == "__main__":
             wait_with_escape(dur.get('Blank1', 2000) / 1000.0, kb, io)
 
             # --- Decision phase ---
+            print("Entering decision phase")
             decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight)
+            print("Exiting decision phase")
 
             # --- Effort phase (only when scheduled and accepted) ---
             if i in indx_effort_trials and trials.loc[i, 'Acceptance'] == 1:
@@ -201,7 +210,8 @@ if __name__ == "__main__":
             rec.add_trial(trial_dict)
 
         # --- Final feedback UI ---
-        streamer.send_event("Final feedback start", {"trial": i + 1, "t": expClock.getTime()})
+        if streamer is not None:
+            streamer.send_event("Final feedback start", {"trial": i + 1, "t": expClock.getTime()})
         for elem in screens.bRectCross:
             elem.draw()
         win.flip()
@@ -223,7 +233,8 @@ if __name__ == "__main__":
         logging.exception(f"Unhandled error; saving data anyway: {e}")
     finally:
         # Always close streamer and save data
-        streamer.close()
+        if streamer is not None:
+            streamer.close()
         save_and_quit(
             win=win,
             rec=rec,
