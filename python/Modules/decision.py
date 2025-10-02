@@ -11,7 +11,7 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
     - Writes results back in-place to `trials`.
     """
     # --- Configuration
-    cfg = parse_args()
+    cfg = parse_args("main")
 
     # --- 0) Resolve per-trial inputs & durations ---
     row = trials.loc[i]

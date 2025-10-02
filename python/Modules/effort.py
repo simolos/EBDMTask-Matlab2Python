@@ -38,7 +38,7 @@ def hand_positioning_phase(
     """
 
     # --- Configuration
-    cfg = parse_args()
+    cfg = parse_args("main")
 
     if flag_MultipleKeyPressed == 1:
         for elem in screens.bPosition_fingers_1:
@@ -103,7 +103,7 @@ def get_ready_phase(
     """
 
     # --- Configuration
-    cfg = parse_args()
+    cfg = parse_args("main")
 
     TaskTimings.append((expClock.getTime(), f"T{i} Get ready"))
     for elem in screens.bGetReadyForEP:
@@ -157,7 +157,7 @@ def effort_production_phase(
     """
 
     # --- Configuration
-    cfg = parse_args()
+    cfg = parse_args("main")
 
     # Initial 'Go' frame (time zero)
     target_effort = (float(trials.loc[i, 'effort']) - 0.3) / 0.7
@@ -262,7 +262,7 @@ def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i):
     """Cross between EP and feedback. Uses dur['Blank2'] (ms)."""
 
     # --- Configuration
-    cfg = parse_args()
+    cfg = parse_args("main")
 
     for elem in screens.bTaskWaitCross:
         elem.draw()
@@ -281,7 +281,7 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
     """
 
     # --- Configuration
-    cfg = parse_args()
+    cfg = parse_args("main")
     
     if trials.loc[i, 'Anticipation_EP'] == 1:
         trials.at[i, 'success'] = 0

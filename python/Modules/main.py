@@ -96,12 +96,12 @@ def save_and_quit(
 
 if __name__ == "__main__":
     # --- Configuration and sanity checks ---
-    cfg = parse_args()
+    cfg = parse_args("main")
     assert cfg.nTrials > 0, "nTrials must be > 0"
     assert 0 <= cfg.nEffortTrials <= cfg.nTrials, "nEffortTrials must be in [0, nTrials]"
     assert cfg.population in [1, 2, 3], "Population group must be in [1, 2, 3]"
 
-    # Pressed-keys mode: 0=simple Ctrl, 1=hold A/W/E + tap F, 2=hold Ctrl + tap Ctrl
+    # Pressed-keys mode: 0=simply tap "Ctrl", 1=hold "A/W/E" and tap "F", 2=hold "Ctrl" and tap "Ctrl"
     flag_MultipleKeyPressed = cfg.mode
 
     # Mapping of "Yes" side
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     cond_er, indx_effort_trials = GetTrialCondition(cfg.nTrials, cfg.nEffortTrials, cfg.population)
     trials = init_trials(cfg.nTrials, cond_er, dur["DM_Preparation"], dur["EP_Preparation"])
 
-    # --- Recorder setup ---
+    # --- Data log setup ---
     prefix = f"{cfg.subject_id}_{cfg.block_id}"
     rec = DataRecorder(output_dir=cfg.output_dir, prefix=prefix)
 

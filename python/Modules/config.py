@@ -7,11 +7,11 @@ import pandas as pd
 from datetime import datetime
 
 
-def parse_args():
+def parse_args(task: str):
     """Parse CLI arguments and return a populated argparse.Namespace."""
     parser = argparse.ArgumentParser(description="Experiment configuration for EBDMTask")
 
-    # --- Core identifiers and I/O ---
+    # --- Core identifiers---
     parser.add_argument(
         "-s", "--subject-id", type=str, required=True,
         help="Participant identifier (e.g., S01)"
@@ -19,13 +19,21 @@ def parse_args():
     parser.add_argument(
         "-b", "--block-id", type=str, required=True,
         help="Block identifier"
-    )
+    )  
 
+    # --- Language ---
     parser.add_argument(
-        "-mtf", "--MTF", type=int, required=True,
-        help="Participant maximum taping frequency"
+        "-l", "--language", type=str, default="en", choices=["en", "fr"],
+        help="Experiment language"
     )
 
+    # --- Population ---
+    parser.add_argument(
+        "-p", "--population", type=int, default=1,
+        help="Population group (1, 2, or 3): 1=healthy, 2=old, 3=patient"
+    )
+
+    # --- Directory behavioral log
     parser.add_argument(
         "-o", "--output_dir", default="results",
         help="Directory where logs/files are written"
@@ -38,34 +46,48 @@ def parse_args():
         default="false",
         help="Enable or disable Websocket streaming (default: false)"
     )
+    
+    # --- Eyelink ---
+    parser.add_argument("--eyetracker", action="store_true", help="Enable eye-tracker")
 
-    # --- Localization and stimulation ---
-    parser.add_argument(
-        "-l", "--language", type=str, default="en", choices=["en", "fr"],
-        help="Experiment language"
-    )
+    # --- TI triggers ---
     parser.add_argument(
         "-t", "--stimulation", type=str, default="none",
         help="Type of stimulation (e.g., none, tms)"
     )
 
+    # --- Full Screen ---
+    parser.add_argument(
+        "-fullscr", "--fullscreen", type=str, default="N", choices=["N", "Y"],
+        help="Fullscreen window (Y) or windowed mode (N)"
+    )
+
+
+
+
+    # --- Maximum tapping frequency ---
+    parser.add_argument(
+        "-mtf", "--MTF", type=int, required=True,
+        help="Participant maximum taping frequency"
+    )
+
+
+
+
+
     # --- Design parameters ---
     parser.add_argument(
-        "-n", "--nTrials", type=int, default=32,
+        "-n", "--nTrials", type=int, default=64,
         help="Number of trials in block (should be a multiple of 16)"
     )
     parser.add_argument(
-        "-e", "--nEffortTrials", type=int, default=8,
-        help="Number of effort trials in block"
+        "-e", "--nEffortTrials", type=int, default=16,
+        help="Number of effort trials in block (should be one fourth of total number of trials)"
     )
-    parser.add_argument(
-        "-p", "--population", type=int, default=1,
-        help="Population group (1, 2, or 3): 1=healthy, 2=old, 3=patient"
-    )
+
 
     # --- Flags / modes ---
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-    parser.add_argument("--eyetracker", action="store_true", help="Enable eye-tracker")
     parser.add_argument("--test-dev", action="store_true", help="Enable test/dev mode")
     parser.add_argument(
         "-m", "--mode", type=int, default=0, choices=[0, 1, 2],
@@ -76,10 +98,7 @@ def parse_args():
         "-chmap", "--ChangeMappingYes", type=str, default="N", choices=["N", "Y"],
         help="Map 'Yes' to the right side (Y) or keep default (N)"
     )
-    parser.add_argument(
-        "-fullscr", "--fullscreen", type=str, default="N", choices=["N", "Y"],
-        help="Fullscreen window (Y) or windowed mode (N)"
-    )
+
 
     args = parser.parse_args()
 
