@@ -29,7 +29,7 @@ def all_keys_pressed(kb, win=None):
 # ---------- phases ----------
 def hand_positioning_phase(
     streamer, i, win, screens, kb, expClock, dur, trials, TaskTimings,
-    flag_MultipleKeyPressed, io=None
+    flag_MultipleKeyPressed, cfg, io=None, 
 ):
     """
     Show the finger-positioning buffer and wait until the required combo is held
@@ -38,7 +38,7 @@ def hand_positioning_phase(
     """
 
     # --- Configuration
-    cfg = parse_args("main")
+    # cfg = parse_args("main")
 
     if flag_MultipleKeyPressed == 1:
         for elem in screens.bPosition_fingers_1:
@@ -92,7 +92,7 @@ def hand_positioning_phase(
 
 def get_ready_phase(
     streamer, i, win, screens, kb, io, expClock, trials,
-    flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings
+    flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg
 ):
     """
     Display 'Get ready' and detect anticipation within the per-trial EP jitter.
@@ -103,7 +103,7 @@ def get_ready_phase(
     """
 
     # --- Configuration
-    cfg = parse_args("main")
+    # cfg = parse_args("main")
 
     TaskTimings.append((expClock.getTime(), f"T{i} Get ready"))
     for elem in screens.bGetReadyForEP:
@@ -146,7 +146,7 @@ def get_ready_phase(
 
 def effort_production_phase(
     streamer, keys, i, win, screens, kb, io, expClock,
-    dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed
+    dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg
 ):
     """
     EP frame loop:
@@ -157,7 +157,7 @@ def effort_production_phase(
     """
 
     # --- Configuration
-    cfg = parse_args("main")
+    # cfg = parse_args("main")
 
     # Initial 'Go' frame (time zero)
     target_effort = (float(trials.loc[i, 'effort']) - 0.3) / 0.7
@@ -258,11 +258,11 @@ def effort_production_phase(
             core.wait(remain)
 
 
-def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i):
+def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg):
     """Cross between EP and feedback. Uses dur['Blank2'] (ms)."""
 
     # --- Configuration
-    cfg = parse_args("main")
+    # cfg = parse_args("main")
 
     for elem in screens.bTaskWaitCross:
         elem.draw()
@@ -273,7 +273,7 @@ def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i):
         streamer.send_event("Waiting feedback", {"trial": i + 1, "t": expClock.getTime()})
 
 
-def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, GV=None, Hz=None):
+def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, GV=None, Hz=None):
     """
     Feedback based on mean onset frequency:
       success if (mean(keypr)*Hz)/GV >= eff_t
@@ -281,7 +281,7 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
     """
 
     # --- Configuration
-    cfg = parse_args("main")
+    # cfg = parse_args("main")
     
     if trials.loc[i, 'Anticipation_EP'] == 1:
         trials.at[i, 'success'] = 0
@@ -334,8 +334,8 @@ def pupil_baseline_phase(streamer, win, screens, dur):
 def effort_phase(
     streamer, i, win, screens, kb, io,
     expClock, dur, GV, Hz,
-    trials, CURSOR, TaskTimings, keypr,
-    flag_MultipleKeyPressed=0, KEYBOARD_MODE=True
+    trials, CURSOR, TaskTimings, keypr, cfg,
+    flag_MultipleKeyPressed=0, KEYBOARD_MODE=True,
 ):
     """
     Wrapper for the EP pipeline of trial i:
@@ -351,28 +351,28 @@ def effort_phase(
     if flag_MultipleKeyPressed != 0:
         hand_positioning_phase(
             streamer, i, win, screens, kb, expClock, dur, trials, TaskTimings,
-            flag_MultipleKeyPressed, io=io
+            flag_MultipleKeyPressed, cfg, io=io
         )
         get_ready_phase(
             streamer, i, win, screens, kb, io, expClock, trials,
-            flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings
+            flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg
         )
         if trials.loc[i, 'Anticipation_EP'] == 0:
             effort_production_phase(
                 streamer, ['f'], i, win, screens, kb, io, expClock,
-                dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed
+                dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg
             )
     else:
         get_ready_phase(
             streamer, i, win, screens, kb, io, expClock, trials,
-            flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings
+            flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg
         )
         if trials.loc[i, 'Anticipation_EP'] == 0:
             effort_production_phase(
                 streamer, ['f'], i, win, screens, kb, io, expClock,
-                dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed
+                dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg
             )
 
-    blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i)
-    feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, GV=GV, Hz=Hz)
+    blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg)
+    feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, GV=GV, Hz=Hz)
     pupil_baseline_phase(streamer, win, screens, dur)

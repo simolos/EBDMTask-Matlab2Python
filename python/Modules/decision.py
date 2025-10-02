@@ -3,7 +3,7 @@ from keyboard import poll_keys, clear_events
 from config import keys_choice, parse_args
 import numpy as np
 
-def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight):
+def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight, cfg):
     """
     Decision phase with strict post-response display:
     - Response must occur before DM_S (decision window).
@@ -11,7 +11,7 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
     - Writes results back in-place to `trials`.
     """
     # --- Configuration
-    cfg = parse_args("main")
+    # cfg = parse_args("main")
 
     # --- 0) Resolve per-trial inputs & durations ---
     row = trials.loc[i]

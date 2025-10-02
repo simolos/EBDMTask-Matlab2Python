@@ -96,7 +96,7 @@ def save_and_quit(
 
 if __name__ == "__main__":
     # --- Configuration and sanity checks ---
-    cfg = parse_args("main")
+    cfg = parse_args("EBDM")
     assert cfg.nTrials > 0, "nTrials must be > 0"
     assert 0 <= cfg.nEffortTrials <= cfg.nTrials, "nEffortTrials must be in [0, nTrials]"
     assert cfg.population in [1, 2, 3], "Population group must be in [1, 2, 3]"
@@ -108,9 +108,14 @@ if __name__ == "__main__":
     flag_MapYesAtRight = (cfg.ChangeMappingYes == 'Y')
 
     # Trials & durations
-    dur = get_task_duration(cfg.eyetracker, cfg.population)
+    dur = get_task_duration(cfg.eyetracker, cfg.population, "EBDM")
     cond_er, indx_effort_trials = GetTrialCondition(cfg.nTrials, cfg.nEffortTrials, cfg.population)
-    trials = init_trials(cfg.nTrials, cond_er, dur["DM_Preparation"], dur["EP_Preparation"])
+    trials = init_trials(
+        n_trials=cfg.nTrials, 
+        cond_e_r=cond_er, 
+        dur_prep_dm=dur["DM_Preparation"], 
+        dur_prep_ep=dur["EP_Preparation"], 
+        task="EBDM")
 
     # --- Data log setup ---
     prefix = f"{cfg.subject_id}_{cfg.block_id}"
@@ -188,16 +193,29 @@ if __name__ == "__main__":
 
             # --- Decision phase ---
             print("Entering decision phase")
-            decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight)
+            decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight, cfg)
             print("Exiting decision phase")
 
             # --- Effort phase (only when scheduled and accepted) ---
             if i in indx_effort_trials and trials.loc[i, 'Acceptance'] == 1:
                 effort_phase(
-                    streamer,
-                    i, win, screens, kb, io, expClock, dur, MTF, Hz,
-                    trials, CURSOR, TaskTimings, keypr,
-                    flag_MultipleKeyPressed, KEYBOARD_MODE=True
+                    streamer=streamer,
+                    i=i,
+                    win=win,
+                    screens=screens,
+                    kb=kb,
+                    io=io,
+                    expClock=expClock,
+                    dur=dur,
+                    GV=MTF,
+                    Hz=Hz,
+                    trials=trials,
+                    CURSOR=CURSOR,
+                    TaskTimings=TaskTimings,
+                    keypr=keypr,
+                    cfg=cfg,  # <-- explicitly pass cfg here
+                    flag_MultipleKeyPressed=flag_MultipleKeyPressed,
+                    KEYBOARD_MODE=True
                 )
                 # Only add gain when no anticipation flag
                 if trials.loc[i, 'Anticipation_EP'] == 0:

@@ -62,31 +62,7 @@ def parse_args(task: str):
         help="Fullscreen window (Y) or windowed mode (N)"
     )
 
-
-
-
-    # --- Maximum tapping frequency ---
-    parser.add_argument(
-        "-mtf", "--MTF", type=int, required=True,
-        help="Participant maximum taping frequency"
-    )
-
-
-
-
-
-    # --- Design parameters ---
-    parser.add_argument(
-        "-n", "--nTrials", type=int, default=64,
-        help="Number of trials in block (should be a multiple of 16)"
-    )
-    parser.add_argument(
-        "-e", "--nEffortTrials", type=int, default=16,
-        help="Number of effort trials in block (should be one fourth of total number of trials)"
-    )
-
-
-    # --- Flags / modes ---
+     # --- Flags / modes ---
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--test-dev", action="store_true", help="Enable test/dev mode")
     parser.add_argument(
@@ -99,6 +75,35 @@ def parse_args(task: str):
         help="Map 'Yes' to the right side (Y) or keep default (N)"
     )
 
+    if task == 'EBDM':
+
+        # --- Maximum tapping frequency ---
+        parser.add_argument(
+            "-mtf", "--MTF", type=int, required=True,
+            help="Participant maximum taping frequency"
+        )
+
+        # --- Design parameters ---
+        parser.add_argument(
+            "-n", "--nTrials", type=int, default=64,
+            help="Number of trials in block (should be a multiple of 16)"
+        )
+        parser.add_argument(
+            "-e", "--nEffortTrials", type=int, default=16,
+            help="Number of effort trials in block (should be one fourth of total number of trials)"
+        )
+
+    elif task == 'MTF':
+
+        # --- Design parameters ---
+        parser.add_argument(
+            "-n", "--nTrials", type=int, default=4,
+            help="Number of trials in the maximum tapping frequency task (typ 4)"
+        )       
+        parser.add_argument(
+            "-e", "--nEffortTrials", type=int, default=4,
+            help="Number of effort trials in the maximum tapping frequency task w/o visual feedback (typ 4)"
+        )
 
     args = parser.parse_args()
 
@@ -167,39 +172,73 @@ TRANSLATIONS = {
 
 
 # get_task_duration.py
-def get_task_duration(flag_eyetracker: int, flag_population: int) -> dict:
+def get_task_duration(flag_eyetracker:int, flag_population:int, task:str) -> dict:
     """Return a dict of per-phase durations (ms) based on population and eyetracker flag."""
     dur = {}
 
     if flag_population == 1:  # Healthy
-        dur["Blank1"] = 2000
-        dur["DM_Preparation"] = [1000, 1400]
-        dur["DM"] = 4000
-        dur["TimeAfterDMade"] = 1000
-        dur["TimeAfterPositionRight"] = 1000
-        dur["GetReadyForEP"] = 1000
-        dur["EP_Preparation"] = [1000, 1400]
-        dur["Task"] = 8000
-        dur["Blank2"] = 500
-        dur["Reward"] = 1000
-        dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
-        dur["FinalFeedback"] = 4000
-        dur["StartBlock"] = 500
+
+        if task == "EBDM":
+
+            dur["Blank1"] = 2000
+            dur["DM_Preparation"] = [1000, 1400]
+            dur["DM"] = 4000
+            dur["TimeAfterDMade"] = 1000
+            dur["TimeAfterPositionRight"] = 1000
+            dur["GetReadyForEP"] = 1000
+            dur["EP_Preparation"] = [1000, 1400]
+            dur["Task"] = 8000
+            dur["Blank2"] = 500
+            dur["Reward"] = 1000
+            dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
+            dur["FinalFeedback"] = 4000
+            dur["StartBlock"] = 500
+            
+        elif task == "MTF":
+            dur["Blank1"] = 2000
+            dur["TimeAfterPositionRight"] = 1000
+            dur["GetReadyForEP"] = 1000
+            dur["EP_Preparation"] = [1000, 1400]
+            dur["Task"] = 8000
+            dur["Blank2"] = 500
+            dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
+            dur["StartBlock"] = 500
+
+        else: raise ValueError(f"Unknown specified task: {task}")
+
 
     elif flag_population == 2:  # Old
-        dur["Blank1"] = 2000
-        dur["DM_Preparation"] = [1000, 1400]
-        dur["DM"] = 6000
-        dur["TimeAfterDMade"] = 1000
-        dur["TimeAfterPositionRight"] = 1000
-        dur["GetReadyForEP"] = 1000
-        dur["EP_Preparation"] = [1800, 2200]
-        dur["Task"] = 6000
-        dur["Blank2"] = 500
-        dur["Reward"] = 1000
-        dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
-        dur["FinalFeedback"] = 4000
-        dur["StartBlock"] = 500
+
+
+        if task == "EBDM":
+
+            dur["Blank1"] = 2000
+            dur["DM_Preparation"] = [1000, 1400]
+            dur["DM"] = 6000
+            dur["TimeAfterDMade"] = 1000
+            dur["TimeAfterPositionRight"] = 1000
+            dur["GetReadyForEP"] = 1000
+            dur["EP_Preparation"] = [1800, 2200]
+            dur["Task"] = 6000
+            dur["Blank2"] = 500
+            dur["Reward"] = 1000
+            dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
+            dur["FinalFeedback"] = 4000
+            dur["StartBlock"] = 500
+
+        elif task == 'MTF':
+            dur["Blank1"] = 2000
+            dur["TimeAfterPositionRight"] = 1000
+            dur["GetReadyForEP"] = 1000
+            dur["EP_Preparation"] = [1800, 2200]
+            dur["Task"] = 6000
+            dur["Blank2"] = 500
+            dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
+            dur["StartBlock"] = 500
+
+        else: raise ValueError(f"Unknown specified task: {task}")
+
+
 
     elif flag_population == 3:  # DBS implanted
         dur["Blank1"] = 2000
@@ -219,31 +258,51 @@ def get_task_duration(flag_eyetracker: int, flag_population: int) -> dict:
     return dur
 
 
-def init_trials(n_trials, cond_e_r, dur_prep_dm, dur_prep_ep):
+def init_trials(n_trials, task:str, dur_prep_ep, cond_e_r=None, dur_prep_dm=None):
     """Create the trial table (pandas.DataFrame) mirroring the Matlab structure."""
-    trials = pd.DataFrame({
-        "trial": np.arange(1, n_trials + 1),                       # Trial index
-        "effort": cond_e_r[:, 0],                                  # Nominal effort
-        "efftested": cond_e_r[:, 0].copy(),                        # Presented effort
-        "rewtested": cond_e_r[:, 1].copy(),                        # Presented reward
-        "reward": cond_e_r[:, 1],                                  # Nominal reward
-        "DecisionTime": np.full(n_trials, np.nan),                 # Decision time
-        "ReactionTimeEP": np.full(n_trials, np.nan),               # Reaction time (EP)
-        "Acceptance": np.full(n_trials, np.nan),                   # 1/0/-1
-        "EffortProduction": np.full(n_trials, np.nan),             # 1 if produced
-        "durPrep_DM": np.random.randint(                           # Prep DM duration (ms)
-            low=int(dur_prep_dm[0]),
-            high=int(dur_prep_dm[1]) + 1,
-            size=n_trials
-        ),
-        "durPrep_EP": np.random.randint(                           # Prep EP duration (ms)
-            low=int(dur_prep_ep[0]),
-            high=int(dur_prep_ep[1]) + 1,
-            size=n_trials
-        ),
-        "success": np.full(n_trials, np.nan),                      # 1/0/-1
-        "Anticipation_EP": np.full(n_trials, np.nan),              # Bool or NaN
-        "Anticipation_DM": np.zeros(n_trials),                     # Bool (0/1)
-        "KeyPositionTime": np.full(n_trials, np.nan),              # Posture time
-    })
+
+    if task == "EBDM":
+        trials = pd.DataFrame({
+            "trial": np.arange(1, n_trials + 1),                       # Trial index
+            "effort": cond_e_r[:, 0],                                  # Nominal effort
+            "efftested": cond_e_r[:, 0].copy(),                        # Presented effort
+            "rewtested": cond_e_r[:, 1].copy(),                        # Presented reward
+            "reward": cond_e_r[:, 1],                                  # Nominal reward
+            "DecisionTime": np.full(n_trials, np.nan),                 # Decision time
+            "ReactionTimeEP": np.full(n_trials, np.nan),               # Reaction time (EP)
+            "Acceptance": np.full(n_trials, np.nan),                   # 1/0/-1
+            "EffortProduction": np.full(n_trials, np.nan),             # 1 if produced
+            "durPrep_DM": np.random.randint(                           # Prep DM duration (ms)
+                low=int(dur_prep_dm[0]),
+                high=int(dur_prep_dm[1]) + 1,
+                size=n_trials
+            ),
+            "durPrep_EP": np.random.randint(                           # Prep EP duration (ms)
+                low=int(dur_prep_ep[0]),
+                high=int(dur_prep_ep[1]) + 1,
+                size=n_trials
+            ),
+            "success": np.full(n_trials, np.nan),                      # 1/0/-1
+            "Anticipation_EP": np.full(n_trials, np.nan),              # Bool or NaN
+            "Anticipation_DM": np.zeros(n_trials),                     # Bool (0/1)
+            "KeyPositionTime": np.full(n_trials, np.nan),              # Posture time
+        })
+
+    elif task == "MTF":
+        trials = pd.DataFrame({
+            "trial": np.arange(1, n_trials + 1),                       # Trial index
+            "ReactionTimeEP": np.full(n_trials, np.nan),               # Reaction time (EP)
+            "EffortProduction": np.full(n_trials, np.nan),             # 1 if produced
+            "durPrep_EP": np.random.randint(                           # Prep EP duration (ms)
+                low=int(dur_prep_ep[0]),
+                high=int(dur_prep_ep[1]) + 1,
+                size=n_trials
+            ),
+            "Anticipation_EP": np.full(n_trials, np.nan),              # Bool or NaN
+            "KeyPositionTime": np.full(n_trials, np.nan),              # Posture time
+        })
+
+    else:
+        raise ValueError(f"Unknown specified task: {task}")
+
     return trials
