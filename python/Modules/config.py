@@ -6,8 +6,39 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
+from dataclasses import dataclass
 
-def parse_args(task: str):
+from enum import Enum, auto
+
+class Task(Enum):
+    EBDM = auto()
+    MTF = auto()
+
+
+class Population(Enum):
+    Healthy = "Healthy"
+    Old = "Old"
+    DBS = "DBS"
+
+
+@dataclass
+class Duration:
+    Blank1 = None
+    DM_Preparation = None
+    DM = None
+    TimeAfterDMade = None
+    TimeAfterPositionRight = None
+    GetReadyForEP = None
+    EP_Preparation = None
+    Task = None
+    Blank2 = None
+    Reward = None
+    TimeForPupilBaselineBack = None 
+    FinalFeedback = None
+    StartBlock = None
+
+
+def parse_args(task:Task):
     """Parse CLI arguments and return a populated argparse.Namespace."""
     parser = argparse.ArgumentParser(description="Experiment configuration for EBDMTask")
 
@@ -29,8 +60,8 @@ def parse_args(task: str):
 
     # --- Population ---
     parser.add_argument(
-        "-p", "--population", type=int, default=1,
-        help="Population group (1, 2, or 3): 1=healthy, 2=old, 3=patient"
+        "-p", "--population", type=Population, choices=list(Population), default="Healthy",
+        help=f"Population group {[f'{p.value}' for p in Population]}"
     )
 
     # --- Directory behavioral log
@@ -75,7 +106,7 @@ def parse_args(task: str):
         help="Map 'Yes' to the right side (Y) or keep default (N)"
     )
 
-    if task == 'EBDM':
+    if task == Task.EBDM:
 
         # --- Maximum tapping frequency ---
         parser.add_argument(
@@ -93,7 +124,7 @@ def parse_args(task: str):
             help="Number of effort trials in block (should be one fourth of total number of trials)"
         )
 
-    elif task == 'MTF':
+    elif task == Task.MTF:
 
         # --- Design parameters ---
         parser.add_argument(
@@ -105,11 +136,13 @@ def parse_args(task: str):
             help="Number of effort trials in the maximum tapping frequency task w/o visual feedback (typ 4)"
         )
 
+
     args = parser.parse_args()
 
     # Attach timestamp and output prefix (used when saving results)
     args.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     args.output_prefix = f"{args.subject_id}_{args.timestamp}"
+
     return args
 
 
@@ -172,96 +205,97 @@ TRANSLATIONS = {
 
 
 # get_task_duration.py
-def get_task_duration(flag_eyetracker:int, flag_population:int, task:str) -> dict:
+def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> Duration:
     """Return a dict of per-phase durations (ms) based on population and eyetracker flag."""
-    dur = {}
+    dur = Duration()
 
-    if flag_population == 1:  # Healthy
+    if population == Population.Healthy:  
 
-        if task == "EBDM":
+        if task == Task.EBDM:
 
-            dur["Blank1"] = 2000
-            dur["DM_Preparation"] = [1000, 1400]
-            dur["DM"] = 4000
-            dur["TimeAfterDMade"] = 1000
-            dur["TimeAfterPositionRight"] = 1000
-            dur["GetReadyForEP"] = 1000
-            dur["EP_Preparation"] = [1000, 1400]
-            dur["Task"] = 8000
-            dur["Blank2"] = 500
-            dur["Reward"] = 1000
-            dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
-            dur["FinalFeedback"] = 4000
-            dur["StartBlock"] = 500
+            dur.Blank1 = 2000
+            dur.DM_Preparation = [1000, 1400]
+            dur.DM = 4000
+            dur.TimeAfterDMade = 1000
+            dur.TimeAfterPositionRight = 1000
+            dur.GetReadyForEP = 1000
+            dur.EP_Preparation = [1000, 1400]
+            dur.Task = 8000
+            dur.Blank2 = 500
+            dur.Reward = 1000
+            dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
+            dur.FinalFeedback = 4000
+            dur.StartBlock = 500
             
-        elif task == "MTF":
-            dur["Blank1"] = 2000
-            dur["TimeAfterPositionRight"] = 1000
-            dur["GetReadyForEP"] = 1000
-            dur["EP_Preparation"] = [1000, 1400]
-            dur["Task"] = 8000
-            dur["Blank2"] = 500
-            dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
-            dur["StartBlock"] = 500
-
-        else: raise ValueError(f"Unknown specified task: {task}")
+        elif task == Task.MTF:
+            dur.Blank1 = 2000
+            dur.TimeAfterPositionRight = 1000
+            dur.GetReadyForEP = 1000
+            dur.EP_Preparation = [1000, 1400]
+            dur.Task = 8000
+            dur.Blank2 = 500
+            dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
+            dur.StartBlock = 500
 
 
-    elif flag_population == 2:  # Old
+    elif Population == Population.Old: 
 
 
-        if task == "EBDM":
+        if task == Task.EBDM:
 
-            dur["Blank1"] = 2000
-            dur["DM_Preparation"] = [1000, 1400]
-            dur["DM"] = 6000
-            dur["TimeAfterDMade"] = 1000
-            dur["TimeAfterPositionRight"] = 1000
-            dur["GetReadyForEP"] = 1000
-            dur["EP_Preparation"] = [1800, 2200]
-            dur["Task"] = 6000
-            dur["Blank2"] = 500
-            dur["Reward"] = 1000
-            dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
-            dur["FinalFeedback"] = 4000
-            dur["StartBlock"] = 500
+            dur.Blank1 = 2000
+            dur.DM_Preparation = [1000, 1400]
+            dur.DM = 6000
+            dur.TimeAfterDMade = 1000
+            dur.TimeAfterPositionRight = 1000
+            dur.GetReadyForEP = 1000
+            dur.EP_Preparation = [1800, 2200]
+            dur.Task = 6000
+            dur.Blank2 = 500
+            dur.Reward = 1000
+            dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
+            dur.FinalFeedback = 4000
+            dur.StartBlock = 500
 
-        elif task == 'MTF':
-            dur["Blank1"] = 2000
-            dur["TimeAfterPositionRight"] = 1000
-            dur["GetReadyForEP"] = 1000
-            dur["EP_Preparation"] = [1800, 2200]
-            dur["Task"] = 6000
-            dur["Blank2"] = 500
-            dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
-            dur["StartBlock"] = 500
-
-        else: raise ValueError(f"Unknown specified task: {task}")
+        elif task ==Task.MTF:
+            dur.Blank1 = 2000
+            dur.TimeAfterPositionRight = 1000
+            dur.GetReadyForEP = 1000
+            dur.EP_Preparation = [1800, 2200]
+            dur.Task = 6000
+            dur.Blank2 = 500
+            dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
+            dur.StartBlock = 500
 
 
 
-    elif flag_population == 3:  # DBS implanted
-        dur["Blank1"] = 2000
-        dur["DM_Preparation"] = [1000, 1400]
-        dur["DM"] = 6000
-        dur["TimeAfterDMade"] = 1000
-        dur["TimeAfterPositionRight"] = 1000
-        dur["GetReadyForEP"] = 1000
-        dur["EP_Preparation"] = [1800, 2200]
-        dur["Task"] = 6000
-        dur["Blank2"] = 500
-        dur["Reward"] = 1000
-        dur["TimeForPupilBaselineBack"] = 2000 if flag_eyetracker == 1 else 2000
-        dur["FinalFeedback"] = 4000
-        dur["StartBlock"] = 500
+    elif population == Population.DBS:  
+        dur.Blank1 = 2000
+        dur.DM_Preparation = [1000, 1400]
+        dur.DM = 6000
+        dur.TimeAfterDMade = 1000
+        dur.TimeAfterPositionRight = 1000
+        dur.GetReadyForEP = 1000
+        dur.EP_Preparation = [1800, 2200]
+        dur.Task = 6000
+        dur.Blank2 = 500
+        dur.Reward = 1000
+        dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
+        dur.FinalFeedback = 4000
+        dur.StartBlock = 500
 
     return dur
 
+def get_effort_proposed(population:Population):
+    if population == Population.Healthy:
+        return np.array([0.5, 0.65, 0.8, 0.95])
+    else:
+        return np.array([0.45, 0.6, 0.75, 0.9])
 
-def init_trials(n_trials, task:str, dur_prep_ep, cond_e_r=None, dur_prep_dm=None):
+def init_trials(n_trials, task:Task, dur_prep_ep, cond_e_r=None, dur_prep_dm=None):
     """Create the trial table (pandas.DataFrame) mirroring the Matlab structure."""
 
-    if task == "EBDM":
+    if task == Task.EBDM:
         trials = pd.DataFrame({
             "trial": np.arange(1, n_trials + 1),                       # Trial index
             "effort": cond_e_r[:, 0],                                  # Nominal effort
@@ -288,7 +322,7 @@ def init_trials(n_trials, task:str, dur_prep_ep, cond_e_r=None, dur_prep_dm=None
             "KeyPositionTime": np.full(n_trials, np.nan),              # Posture time
         })
 
-    elif task == "MTF":
+    elif task == Task.MTF:
         trials = pd.DataFrame({
             "trial": np.arange(1, n_trials + 1),                       # Trial index
             "ReactionTimeEP": np.full(n_trials, np.nan),               # Reaction time (EP)
@@ -302,7 +336,5 @@ def init_trials(n_trials, task:str, dur_prep_ep, cond_e_r=None, dur_prep_dm=None
             "KeyPositionTime": np.full(n_trials, np.nan),              # Posture time
         })
 
-    else:
-        raise ValueError(f"Unknown specified task: {task}")
 
     return trials

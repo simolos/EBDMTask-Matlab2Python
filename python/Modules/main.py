@@ -3,12 +3,14 @@
 
 from psychopy import core, visual, monitors
 
+from dataclasses import asdict
+
 from data import DataRecorder
 import numpy as np
 import os
 from screens import Screens
 from general_trial import GetTrialCondition
-from config import parse_args, get_task_duration, init_trials
+from config import parse_args, get_task_duration, init_trials, Task, Population
 from decision import decision_phase
 from effort import effort_phase, init_cursor_matrix
 from ws_utils import trial_row_payload
@@ -96,10 +98,10 @@ def save_and_quit(
 
 if __name__ == "__main__":
     # --- Configuration and sanity checks ---
-    cfg = parse_args("EBDM")
+    cfg = parse_args(Task.EBDM)
     assert cfg.nTrials > 0, "nTrials must be > 0"
     assert 0 <= cfg.nEffortTrials <= cfg.nTrials, "nEffortTrials must be in [0, nTrials]"
-    assert cfg.population in [1, 2, 3], "Population group must be in [1, 2, 3]"
+    assert cfg.population in Population, "Population group must be in [1, 2, 3]"
 
     # Pressed-keys mode: 0=simply tap "Ctrl", 1=hold "A/W/E" and tap "F", 2=hold "Ctrl" and tap "Ctrl"
     flag_MultipleKeyPressed = cfg.mode
@@ -108,14 +110,14 @@ if __name__ == "__main__":
     flag_MapYesAtRight = (cfg.ChangeMappingYes == 'Y')
 
     # Trials & durations
-    dur = get_task_duration(cfg.eyetracker, cfg.population, "EBDM")
+    dur = get_task_duration(cfg.eyetracker, cfg.population, Task.EBDM)
     cond_er, indx_effort_trials = GetTrialCondition(cfg.nTrials, cfg.nEffortTrials, cfg.population)
     trials = init_trials(
         n_trials=cfg.nTrials, 
         cond_e_r=cond_er, 
-        dur_prep_dm=dur["DM_Preparation"], 
-        dur_prep_ep=dur["EP_Preparation"], 
-        task="EBDM")
+        dur_prep_dm=dur.DM_Preparation, 
+        dur_prep_ep=dur.EP_Preparation, 
+        task = Task.EBDM)
 
     # --- Data log setup ---
     prefix = f"{cfg.subject_id}_{cfg.block_id}"
@@ -146,31 +148,31 @@ if __name__ == "__main__":
     Hz = win.getActualFrameRate(nIdentical=20, nMaxFrames=200, nWarmUpFrames=10, threshold=1)
     if Hz is None : Hz = 60
 
-    CURSOR, nFrames = init_cursor_matrix(dur["Task"], Hz, cfg.nTrials)
+    CURSOR, nFrames = init_cursor_matrix(dur.Task, Hz, cfg.nTrials)
     keypr = np.full((nFrames, cfg.nTrials), np.nan, dtype=float)
 
     # --- Start block (fixation) ---
     for elem in screens.bRectCross:
         elem.draw()
     win.flip()
-    wait_with_escape(dur.get('StartBlock', 500) / 1000.0, kb, io)
+    wait_with_escape(dur.StartBlock / 1000.0, kb, io)
 
     # --- Constant durations to server (small JSON) ---
     if streamer is not None:
         streamer.send_event(
             "Constant durations [ms]",
             {
-                "durBlank1": dur["Blank1"],
-                "durDM": dur["DM"],
-                "durTimeAfterDmade": dur["TimeAfterDMade"],
-                "durTimeAfterPositionRight": dur["TimeAfterPositionRight"],
-                "durReadyEP": dur["GetReadyForEP"],
-                "durEffortProduction": dur["Task"],
-                "durBlank2": dur["Blank2"],
-                "durFeedback": dur["Reward"],
-                "durPupilBaselineBack": dur["TimeForPupilBaselineBack"],
-                "durFinalFeedback": dur["FinalFeedback"],
-                "durStartBlock": dur["StartBlock"],
+                "durBlank1": dur.Blank1,
+                "durDM": dur.DM,
+                "durTimeAfterDmade": dur.TimeAfterDMade,
+                "durTimeAfterPositionRight": dur.TimeAfterPositionRight,
+                "durReadyEP": dur.GetReadyForEP,
+                "durEffortProduction": dur.Task,
+                "durBlank2": dur.Blank2,
+                "durFeedback": dur.Reward,
+                "durPupilBaselineBack": dur.TimeForPupilBaselineBack,
+                "durFinalFeedback": dur.FinalFeedback,
+                "durStartBlock": dur.StartBlock,
             },
         )
 
@@ -189,7 +191,7 @@ if __name__ == "__main__":
             for elem in screens.bRectCross:
                 elem.draw()
             win.flip()
-            wait_with_escape(dur.get('Blank1', 2000) / 1000.0, kb, io)
+            wait_with_escape(dur.Blank1 / 1000.0, kb, io)
 
             # --- Decision phase ---
             print("Entering decision phase")
@@ -224,8 +226,11 @@ if __name__ == "__main__":
             # --- Record enriched trial row (Hz, MTF) ---
             trial_dict = trials.loc[i].to_dict()
             trial_dict.update({"Hz": Hz, "MTF": MTF, "mode": cfg.mode})
-            trial_dict.update({f"dur_{k}": v for k, v in dur.items()})
+            print("before potential error")
+            trial_dict.update({f"dur_{k}": v for k, v in asdict(dur).items()})
             rec.add_trial(trial_dict)
+
+            print("recorded okay")
 
         # --- Final feedback UI ---
         if streamer is not None:
@@ -236,7 +241,7 @@ if __name__ == "__main__":
         for elem in screens._create_ffeedback_buffer(float(TotalGain / 100)):
             elem.draw()
         win.flip()
-        wait_with_escape(dur.get('FinalFeedback', 4000) / 1000.0, kb, io)
+        wait_with_escape(dur.FinalFeedback / 1000.0, kb, io)
 
     except QuitSignal:
         print("Exit by 'ESC'")

@@ -63,7 +63,7 @@ def hand_positioning_phase(
                 if held_since is None:
                     held_since = tnow
                     trials.at[i, 'KeyPositionTime'] = tnow - t0
-                elif (tnow - held_since) > (dur["TimeAfterPositionRight"] / 1000.0):
+                elif (tnow - held_since) > (dur.TimeAfterPositionRight / 1000.0):
                     TaskTimings.append((expClock.getTime(), f"T{i} Hand in Position"))
                     if cfg.ws_streaming.lower() == "true":
                         streamer.send_event("hand positionning time", {"trial": i + 1, "t": expClock.getTime()})
@@ -78,7 +78,7 @@ def hand_positioning_phase(
                 if held_since is None:
                     held_since = tnow
                     trials.at[i, 'KeyPositionTime'] = tnow - t0
-                elif (tnow - held_since) > (dur["TimeAfterPositionRight"] / 1000.0):
+                elif (tnow - held_since) > (dur.TimeAfterPositionRight / 1000.0):
                     TaskTimings.append((expClock.getTime(), f"T{i} Hand in Position"))
                     if cfg.ws_streaming.lower() == "true":
                         streamer.send_event("hand positionning time", {"trial": i + 1, "t": expClock.getTime()})
@@ -259,7 +259,11 @@ def effort_production_phase(
 
 
 def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg):
-    """Cross between EP and feedback. Uses dur['Blank2'] (ms)."""
+    """Cross between EP and feedback. Uses dur['Blank2'] (ms).
+        streamer: is a dict with so and so
+        win: is the Windows object from foo
+
+    """
 
     # --- Configuration
     # cfg = parse_args("main")
@@ -267,7 +271,7 @@ def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg):
     for elem in screens.bTaskWaitCross:
         elem.draw()
     win.flip()
-    core.wait(dur["Blank2"] / 1000.0)
+    core.wait(dur.Blank2 / 1000.0)
     TaskTimings.append((expClock.getTime(), f"T{i} WaitingFeedback"))
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event("Waiting feedback", {"trial": i + 1, "t": expClock.getTime()})
@@ -291,7 +295,7 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
         if cfg.ws_streaming.lower() == "true":
             streamer.send_event("FeedbackAnticip", {"trial": i + 1, "t": expClock.getTime()})
         win.flip()
-        core.wait(dur["Reward"] / 1000.0)
+        core.wait(dur.Reward / 1000.0)
         return
 
     eff_t = float(trials.loc[i, 'effort'])
@@ -317,7 +321,7 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
         TaskTimings.append((expClock.getTime(), f"T{i} FeedbackFailure"))
 
     win.flip()
-    core.wait(dur["Reward"] / 1000.0)
+    core.wait(dur.Reward / 1000.0)
 
 
 def pupil_baseline_phase(streamer, win, screens, dur):
@@ -325,11 +329,14 @@ def pupil_baseline_phase(streamer, win, screens, dur):
     for elem in screens.bRectCross:
         elem.draw()
     win.flip()
-    core.wait(dur["TimeForPupilBaselineBack"] / 1000.0)
+    core.wait(dur.TimeForPupilBaselineBack / 1000.0)
     for elem in screens.bRectCross:
         elem.draw()
     win.flip()
 
+# class EffortParameters:
+#    def __init__(self):
+#        self.streamer = some_default_streamer
 
 def effort_phase(
     streamer, i, win, screens, kb, io,
@@ -353,25 +360,16 @@ def effort_phase(
             streamer, i, win, screens, kb, expClock, dur, trials, TaskTimings,
             flag_MultipleKeyPressed, cfg, io=io
         )
-        get_ready_phase(
-            streamer, i, win, screens, kb, io, expClock, trials,
-            flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg
+
+    get_ready_phase(
+        streamer, i, win, screens, kb, io, expClock, trials,
+        flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg
+    )
+    if trials.loc[i, 'Anticipation_EP'] == 0:
+        effort_production_phase(
+            streamer, ['f'], i, win, screens, kb, io, expClock,
+            dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg
         )
-        if trials.loc[i, 'Anticipation_EP'] == 0:
-            effort_production_phase(
-                streamer, ['f'], i, win, screens, kb, io, expClock,
-                dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg
-            )
-    else:
-        get_ready_phase(
-            streamer, i, win, screens, kb, io, expClock, trials,
-            flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg
-        )
-        if trials.loc[i, 'Anticipation_EP'] == 0:
-            effort_production_phase(
-                streamer, ['f'], i, win, screens, kb, io, expClock,
-                dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg
-            )
 
     blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg)
     feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, GV=GV, Hz=Hz)

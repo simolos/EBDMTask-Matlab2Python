@@ -16,8 +16,8 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
     # --- 0) Resolve per-trial inputs & durations ---
     row = trials.loc[i]
     dur_prep_ms  = int(row.get('durPrep_DM', 1000))
-    dur_dm_ms    = int(dur.get('DM', 3000))
-    after_dm_ms  = int(dur.get('TimeAfterDMade', 500))
+    dur_dm_ms    = int(dur.DM)
+    after_dm_ms  = int(dur.TimeAfterDMade)
 
     # Convert once to seconds
     PREP_S   = dur_prep_ms / 1000.0

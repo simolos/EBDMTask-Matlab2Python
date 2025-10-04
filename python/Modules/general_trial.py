@@ -1,5 +1,6 @@
 # Modules/generation_trial.py
 import numpy as np
+from config import Population, get_effort_proposed
 
 def _balanced_pick_rows_per_effort(pool, Eff_Proposed, rows_per_value):
     """
@@ -19,7 +20,7 @@ def _balanced_pick_rows_per_effort(pool, Eff_Proposed, rows_per_value):
         return np.empty((0, pool.shape[1]))
     return np.vstack(selected)
 
-def GetTrialCondition(nTrials, n_Effort_Trials, flag_Population):
+def GetTrialCondition(nTrials, n_Effort_Trials, population:Population):
     """
     Strict port of the MATLAB GetTrialCondition.
     Returns:
@@ -27,10 +28,7 @@ def GetTrialCondition(nTrials, n_Effort_Trials, flag_Population):
       indx_Effort_Trials: indices where EP_flag==1
     """
     # --- Effort grid (per population) ---
-    if flag_Population == 1:
-        Eff_Proposed = np.array([0.5, 0.65, 0.8, 0.95])
-    else:
-        Eff_Proposed = np.array([0.45, 0.6, 0.75, 0.9])
+    Eff_Proposed = get_effort_proposed(population)
 
     Rew_Proposed = np.array([1, 5, 10, 20])
     Effort, Reward = np.meshgrid(Eff_Proposed, Rew_Proposed)
