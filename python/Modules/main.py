@@ -3,9 +3,8 @@
 
 from psychopy import core, visual, monitors
 
-from dataclasses import asdict
-
 from data import DataRecorder
+from dataclasses import asdict
 import numpy as np
 import os
 from screens import Screens
@@ -209,15 +208,16 @@ if __name__ == "__main__":
                     io=io,
                     expClock=expClock,
                     dur=dur,
-                    GV=MTF,
+                    MTF=MTF,
                     Hz=Hz,
                     trials=trials,
                     CURSOR=CURSOR,
                     TaskTimings=TaskTimings,
                     keypr=keypr,
                     cfg=cfg,  # <-- explicitly pass cfg here
+                    task = Task.EBDM,
                     flag_MultipleKeyPressed=flag_MultipleKeyPressed,
-                    KEYBOARD_MODE=True
+                    KEYBOARD_MODE=True,
                 )
                 # Only add gain when no anticipation flag
                 if trials.loc[i, 'Anticipation_EP'] == 0:
@@ -271,5 +271,5 @@ if __name__ == "__main__":
             trials=trials,
             all_fmt="mat",  # or "mat" or "csv"
             mode=cfg.mode,     
-            durations=dur,      
+            durations=asdict(dur),      
         )

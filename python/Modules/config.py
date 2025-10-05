@@ -234,7 +234,7 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
             dur.EP_Preparation = [1000, 1400]
             dur.Task = 8000
             dur.Blank2 = 500
-            dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
+            dur.TimeForPupilBaselineBack = 3000 
             dur.StartBlock = 500
 
 
@@ -264,7 +264,7 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
             dur.EP_Preparation = [1800, 2200]
             dur.Task = 6000
             dur.Blank2 = 500
-            dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
+            dur.TimeForPupilBaselineBack = 30000
             dur.StartBlock = 500
 
 

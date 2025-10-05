@@ -2,8 +2,11 @@
 # Purpose: Effort phase subroutines (positioning, get-ready, EP frames, feedback).
 from psychopy import core
 from keyboard import poll_keys, clear_events
-from config import combo, parse_args
+from config import combo, parse_args, Task
 import numpy as np
+from enum import Enum, auto
+
+
 
 # ======= CONSTANTS ========
 KEY_PRESS = 22
@@ -102,8 +105,6 @@ def get_ready_phase(
       - else:   anticipation on KEY_PRESS of active key
     """
 
-    # --- Configuration
-    # cfg = parse_args("main")
 
     TaskTimings.append((expClock.getTime(), f"T{i} Get ready"))
     for elem in screens.bGetReadyForEP:
@@ -146,7 +147,7 @@ def get_ready_phase(
 
 def effort_production_phase(
     streamer, keys, i, win, screens, kb, io, expClock,
-    dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg
+    dur, MTF, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg, task
 ):
     """
     EP frame loop:
@@ -160,15 +161,19 @@ def effort_production_phase(
     # cfg = parse_args("main")
 
     # Initial 'Go' frame (time zero)
-    target_effort = (float(trials.loc[i, 'effort']) - 0.3) / 0.7
-    reward_val = float(trials.loc[i, 'reward'])
+        
     for elem in screens.bTaskWait:
         elem.draw()
-    for elem in screens._create_reward_buffer(reward_val, target_effort):
-        elem.draw()
-    for elem in screens._create_bar_buffer(target_effort):
-        elem.draw()
+    if task==Task.EBDM:
+        target_effort = (float(trials.loc[i, 'effort']) - 0.3) / 0.7
+        reward_val = float(trials.loc[i, 'reward']) 
+        for elem in screens._create_reward_buffer(reward_val, target_effort):
+            elem.draw()
+        for elem in screens._create_bar_buffer(target_effort):
+            elem.draw()
     win.flip()
+
+
 
     EPClock = core.Clock()
     TaskTimings.append((expClock.getTime(), f"T{i} Start EP"))
@@ -188,15 +193,22 @@ def effort_production_phase(
     while f < nFrames:
         frame_t0 = EPClock.getTime()
 
+
         # Draw static layers
-        for elem in screens.bTaskWait:
-            elem.draw()
+        if task==Task.EBDM:
+            for elem in screens.bTaskWait:
+                elem.draw()
+            for elem in screens._create_reward_buffer(reward_val, target_effort):
+                elem.draw()
+            for elem in screens._create_bar_buffer(target_effort):
+                elem.draw()
+        elif task==Task.MTF:
+            for elem in screens.bTaskWaitCross:
+                elem.draw()
+
         for elem in screens.bGoEP:
             elem.draw()
-        for elem in screens._create_reward_buffer(reward_val, target_effort):
-            elem.draw()
-        for elem in screens._create_bar_buffer(target_effort):
-            elem.draw()
+
 
         # Onset detection per mode
         if flag_MultipleKeyPressed == 1:
@@ -234,20 +246,21 @@ def effort_production_phase(
                         keypr[f, i] = 0
 
         # Cursor from mean onset rate
-        mean_onsets = np.mean(keypr[: f + 1, i]) if f >= 0 else 0.0
-        cursor_pos = (((mean_onsets * Hz) / GV) - 0.3) / 0.7
-        if cursor_pos < 0:
-            cursor_pos = 0
-        elif cursor_pos > 1:
-            cursor_pos = 1
+        if task==Task.EBDM:
+            mean_onsets = np.mean(keypr[: f + 1, i]) if f >= 0 else 0.0
+            cursor_pos = (((mean_onsets * Hz) / MTF) - 0.3) / 0.7
+            if cursor_pos < 0:
+                cursor_pos = 0
+            elif cursor_pos > 1:
+                cursor_pos = 1
 
-        CURSOR[f, i] = cursor_pos
-        if cfg.ws_streaming.lower() == "true":
-            streamer.send_event("effort production phase", {"trial": i + 1, "advancement": cursor_pos})
+            CURSOR[f, i] = cursor_pos
+            if cfg.ws_streaming.lower() == "true":
+                streamer.send_event("effort production phase", {"trial": i + 1, "advancement": cursor_pos})
 
-        # Dynamic cursor
-        for elem in screens._create_cursor_dynamic_buffer(CURSOR[f, i]):
-            elem.draw()
+            # Dynamic cursor
+            for elem in screens._create_cursor_dynamic_buffer(CURSOR[f, i]):
+                elem.draw()
         win.flip()
 
         f += 1
@@ -277,10 +290,10 @@ def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg):
         streamer.send_event("Waiting feedback", {"trial": i + 1, "t": expClock.getTime()})
 
 
-def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, GV=None, Hz=None):
+def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, MTF=None, Hz=None):
     """
     Feedback based on mean onset frequency:
-      success if (mean(keypr)*Hz)/GV >= eff_t
+      success if (mean(keypr)*Hz)/MTF >= eff_t
       big failure if < 0.7*eff_t, else failure.
     """
 
@@ -300,7 +313,7 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
 
     eff_t = float(trials.loc[i, 'effort'])
     mean_onsets = float(np.nanmean(keypr[:, i]))
-    tap_rate_norm = ((mean_onsets * Hz) / GV)
+    tap_rate_norm = ((mean_onsets * Hz) / MTF)
     success = 1 if tap_rate_norm >= eff_t else (-1 if tap_rate_norm < 0.7 * eff_t else 0)
 
     trials.at[i, 'success'] = success
@@ -340,9 +353,9 @@ def pupil_baseline_phase(streamer, win, screens, dur):
 
 def effort_phase(
     streamer, i, win, screens, kb, io,
-    expClock, dur, GV, Hz,
-    trials, CURSOR, TaskTimings, keypr, cfg,
-    flag_MultipleKeyPressed=0, KEYBOARD_MODE=True,
+    expClock, dur, MTF, Hz,
+    trials, CURSOR, TaskTimings, keypr, cfg, task:Task,
+    flag_MultipleKeyPressed=0, KEYBOARD_MODE=True
 ):
     """
     Wrapper for the EP pipeline of trial i:
@@ -365,12 +378,16 @@ def effort_phase(
         streamer, i, win, screens, kb, io, expClock, trials,
         flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg
     )
+
     if trials.loc[i, 'Anticipation_EP'] == 0:
         effort_production_phase(
             streamer, ['f'], i, win, screens, kb, io, expClock,
-            dur, GV, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg
+            dur, MTF, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg, task
         )
 
+
     blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg)
-    feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, GV=GV, Hz=Hz)
+    
+    if task==Task.EBDM:
+        feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, MTF=MTF, Hz=Hz)
     pupil_baseline_phase(streamer, win, screens, dur)
