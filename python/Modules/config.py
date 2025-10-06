@@ -136,6 +136,10 @@ def parse_args(task:Task):
             help="Number of effort trials in the maximum tapping frequency task w/o visual feedback (typ 4)"
         )
 
+    parser.add_argument(
+        "--log-level", type=str, choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO"
+    )
 
     args = parser.parse_args()
 
