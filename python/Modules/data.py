@@ -196,7 +196,12 @@ class DataRecorder:
                 if isinstance(tasktimings, pd.DataFrame):
                     mdict["TaskTimings"] = tasktimings.to_numpy(object)
                 else:
-                    mdict["TaskTimings"] = np.array(tasktimings, dtype=object)
+                    # FIXME: because task timings are a mix of number (time) and string (event label),
+                    #  they cannot be saved to a MATLAB array. They would need to be converted to a cell
+                    #  instead, which supports mixed types, savemat is not currently doing that. As a workaround,
+                    #  we stringify the time values to create a 2D string array instead.
+                    stringified_tasktimings = [(f'{t}', l) for t, l in tasktimings]
+                    mdict["TaskTimings"] = np.array(stringified_tasktimings, dtype=str)
             savemat(path, mdict)
             print(f"All data saved to MAT: {path}")
             return path
