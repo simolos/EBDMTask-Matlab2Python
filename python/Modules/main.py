@@ -168,7 +168,7 @@ if __name__ == "__main__":
                 "durReadyEP": dur.GetReadyForEP,
                 "durEffortProduction": dur.Task,
                 "durBlank2": dur.Blank2,
-                "durFeedback": dur.Reward,
+                "durFeedback": dur.Feedback,
                 "durPupilBaselineBack": dur.TimeForPupilBaselineBack,
                 "durFinalFeedback": dur.FinalFeedback,
                 "durStartBlock": dur.StartBlock,

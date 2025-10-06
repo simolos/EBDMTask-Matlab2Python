@@ -191,7 +191,6 @@ class DataRecorder:
                 "prefix": self.prefix,
                 "trials": {col: trials_df[col].to_numpy() for col in trials_df.columns},
                 "mode":   int(mode) if mode is not None else None,
-                "single_MTF": single_MTF if single_MTF is not None else None
             }
             if tasktimings:
                 if isinstance(tasktimings, pd.DataFrame):
