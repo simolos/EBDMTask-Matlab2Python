@@ -98,6 +98,8 @@ def save_and_quit(
 if __name__ == "__main__":
     # --- Configuration and sanity checks ---
     cfg = parse_args(Task.EBDM)
+    logging.basicConfig(level=logging.getLevelName(cfg.log_level))
+
     assert cfg.nTrials > 0, "nTrials must be > 0"
     assert 0 <= cfg.nEffortTrials <= cfg.nTrials, "nEffortTrials must be in [0, nTrials]"
     assert cfg.population in Population, "Population group must be in [1, 2, 3]"
