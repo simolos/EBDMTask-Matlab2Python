@@ -236,7 +236,7 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
             dur.TimeAfterPositionRight = 1000
             dur.GetReadyForEP = 1000
             dur.EP_Preparation = [1000, 1400]
-            dur.Task = 1000
+            dur.Task = 8000
             dur.Blank2 = 500
             dur.Feedback = 1000
             dur.TimeForPupilBaselineBack = 3000 
