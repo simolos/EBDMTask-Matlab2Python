@@ -57,7 +57,9 @@ class TrialStreamer:
         if not self._connected or not self.ws:
             logging.warning("[WS] not connected; drop JSON event")
             return
-        msg = {**payload, "event": event, "proto": self.proto, "t_send": time.perf_counter()}
+        # msg = {**payload, "event": event, "proto": self.proto, "t_send": time.perf_counter()}
+        msg = {"event_": event}
+        msg.update(payload)
         s = json.dumps(msg, separators=(",", ":"))  # compact
         asyncio.run_coroutine_threadsafe(self.ws.send(s), self.loop)
 
@@ -66,18 +68,23 @@ class TrialStreamer:
         if not self._connected or not self.ws:
             logging.warning("[WS] not connected; drop BINARY")
             return
-        header = {
-            "proto": self.proto,
-            "event": "array_header",
-            "name": name,
-            "trial": int(trial),
-            "dtype": str(arr.dtype),
-            "shape": list(arr.shape),
-            "order": "C",
-            "t_send": time.perf_counter(),
-        }
-        if meta:
-            header["meta"] = meta
+        # header = {
+        #     "proto": self.proto,
+        #     "event": "array_header",
+        #     "name": name,
+        #     "trial": int(trial),
+        #     "dtype": str(arr.dtype),
+        #     "shape": list(arr.shape),
+        #     "order": "C",
+        #     "t_send": time.perf_counter(),
+        # }
+        # if meta:
+        #     header["meta"] = meta
+
+        header = {"event_": "array_header"}
+        
+
+
         h = json.dumps(header, separators=(",", ":"))
         # schedule the atomic send under a lock
         asyncio.run_coroutine_threadsafe(self._send_binary_locked(h, np.ascontiguousarray(arr)), self.loop)

@@ -161,21 +161,26 @@ if __name__ == "__main__":
     # --- Constant durations to server (small JSON) ---
     if streamer is not None:
         streamer.send_event(
-            "Constant durations [ms]",
-            {
-                "durBlank1": dur.Blank1,
-                "durDM": dur.DM,
-                "durTimeAfterDmade": dur.TimeAfterDMade,
-                "durTimeAfterPositionRight": dur.TimeAfterPositionRight,
-                "durReadyEP": dur.GetReadyForEP,
-                "durEffortProduction": dur.Task,
-                "durBlank2": dur.Blank2,
-                "durFeedback": dur.Feedback,
-                "durPupilBaselineBack": dur.TimeForPupilBaselineBack,
-                "durFinalFeedback": dur.FinalFeedback,
-                "durStartBlock": dur.StartBlock,
-            },
-        )
+                "Intertrial interval sent",
+                {"event_": "ITI", "DurITI": 2}
+            )
+
+        # streamer.send_event(
+        #     "Constant durations [ms]",
+        #     {
+        #         "durBlank1": dur.Blank1,
+        #         "durDM": dur.DM,
+        #         "durTimeAfterDmade": dur.TimeAfterDMade,
+        #         "durTimeAfterPositionRight": dur.TimeAfterPositionRight,
+        #         "durReadyEP": dur.GetReadyForEP,
+        #         "durEffortProduction": dur.Task,
+        #         "durBlank2": dur.Blank2,
+        #         "durFeedback": dur.Feedback,
+        #         "durPupilBaselineBack": dur.TimeForPupilBaselineBack,
+        #         "durFinalFeedback": dur.FinalFeedback,
+        #         "durStartBlock": dur.StartBlock,
+        #     },
+        # )
 
     try:
         for i in range(cfg.nTrials):
@@ -186,7 +191,9 @@ if __name__ == "__main__":
             payload = trial_row_payload(trials, i, include, drop_none=True)
 
             if streamer is not None:
+                print("streamer is not None!!!")
                 streamer.send_event("trial_record", payload)
+
 
             # --- Inter-trial cross ---
             for elem in screens.bRectCross:

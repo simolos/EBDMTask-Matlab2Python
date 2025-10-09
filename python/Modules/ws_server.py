@@ -16,12 +16,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+ws = None
 @app.websocket("/trials")
-async def trials_ws(ws: WebSocket):
-    await ws.accept()
+async def trials_ws(ws_conn: WebSocket):
+    global ws
+    await ws_conn.accept()
+    ws = ws_conn
     # connection exists here, can send JSON inside this coroutine
-    while True:
-        await asyncio.sleep(1)
+    try:
+        while True:
+            await asyncio.sleep(0.05)
+    except Exception as e:
+        print(f"[SRV] WebSocket error: {e}")
 
 def start_server():
     threading.Thread(target=lambda: uvicorn.run(app, host="0.0.0.0", port=8765, reload=False, log_level="info"), daemon=True).start()

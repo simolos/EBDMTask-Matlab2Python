@@ -40,7 +40,7 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
             "Preparation DM start",
-            {"trial": i+1, "durPrepDM [ms]": dur_prep_ms, "t": expClock.getTime()}
+            {"event_": "PrepDM", "dur_Prep_DM": round(PREP_S,2)}
         )
 
     prepClock = core.Clock()  # zero at prep start

@@ -1,4 +1,3 @@
-# main_server.py
 # FastAPI server for real-time trial streaming (JSON control + binary arrays)
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -39,6 +38,7 @@ logging.basicConfig(
 # -------- Small helpers --------
 def jsonl_append(path: Path, obj: Dict[str, Any]) -> None:
     """Append a JSON object as a new line to a .jsonl file."""
+    print(f"[DEBUG] Writing to {path.resolve()}")
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
@@ -117,11 +117,11 @@ async def trials_ws(ws: WebSocket):
                     # Persist and ACK (already in your code)
                     jsonl_append(CONTROL_JSONL, data)
                     await ws.send_text(json.dumps({"event":"ack","ack_of":event,"trial":data.get("trial"),"proto":proto}))
-                    # Control event -> persist and (optionally) respond
-                    jsonl_append(CONTROL_JSONL, data)
-                    # Optional lightweight ACK for reliability
-                    await ws.send_text(json.dumps({"event": "ack", "ack_of": event, "trial": data.get("trial"),
-                                                   "proto": proto}))
+                    # # Control event -> persist and (optionally) respond
+                    # jsonl_append(CONTROL_JSONL, data)
+                    # # Optional lightweight ACK for reliability
+                    # await ws.send_text(json.dumps({"event": "ack", "ack_of": event, "trial": data.get("trial"),
+                    #                                "proto": proto}))
 
             # ----- Binary frame -----
             elif "bytes" in msg:
