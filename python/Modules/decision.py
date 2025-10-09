@@ -1,6 +1,6 @@
 from psychopy import core
 from keyboard import poll_keys, clear_events
-from config import keys_choice, parse_args
+from config import keys_choice, parse_args, get_reward_proposed
 import numpy as np
 
 def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight, cfg):
@@ -91,7 +91,13 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
         if not start_trigger_sent:
             TaskTimings.append((expClock.getTime(), f"T{i} Start DM"))
             if cfg.ws_streaming.lower() == "true":
-                streamer.send_event("Start DM", {"trial": i+1, "t": expClock.getTime()})
+                allRewards = get_reward_proposed()
+                currentReward = float(row['reward'])
+                RewardLevel = int(np.where(allRewards == currentReward)[0][0]) + 1
+                streamer.send_event(
+                    "DM phase (offer presentation)",
+                    {"event_": "DMphase", "dur_DMphase": round(DM_S,2), "Effort": float(row['effort']), "Reward": RewardLevel}
+                    )                 
             start_trigger_sent = True
 
         # Poll keys only if response not yet made and still inside DM window
@@ -121,7 +127,11 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
                         t_resp = now  # seconds since DM start
                         TaskTimings.append((expClock.getTime(), f"T{i} Decided {'Yes' if resp==1 else 'No'}"))
                         if cfg.ws_streaming.lower() == "true":
-                            streamer.send_event("Decision", {"trial": i+1, "choice": resp, "t": expClock.getTime()})
+                            streamer.send_event(
+                            "Decision Feedback",
+                            {"event_": "DecisionFeedback", "DMFeedback": resp, "dur_DecisionFeedback": dur.Feedback}
+                            )                 
+
 
                         # Strict post-response period: display tick for AFTER_S seconds, then exit loop
                         post_resp_end = t_resp + AFTER_S

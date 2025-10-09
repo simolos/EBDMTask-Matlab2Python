@@ -297,6 +297,10 @@ def get_effort_proposed(population:Population):
         return np.array([0.5, 0.65, 0.8, 0.95])
     else:
         return np.array([0.45, 0.6, 0.75, 0.9])
+    
+
+def get_reward_proposed():
+    return np.array([1, 5, 10, 20])
 
 def init_trials(n_trials, task:Task, dur_prep_ep, cond_e_r=None, dur_prep_dm=None):
     """Create the trial table (pandas.DataFrame) mirroring the Matlab structure."""

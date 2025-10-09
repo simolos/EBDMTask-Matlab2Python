@@ -1,6 +1,6 @@
 # Modules/generation_trial.py
 import numpy as np
-from config import Population, get_effort_proposed
+from config import Population, get_effort_proposed, get_reward_proposed
 
 def _balanced_pick_rows_per_effort(pool, Eff_Proposed, rows_per_value):
     """
@@ -30,7 +30,8 @@ def GetTrialCondition(nTrials, n_Effort_Trials, population:Population):
     # --- Effort grid (per population) ---
     Eff_Proposed = get_effort_proposed(population)
 
-    Rew_Proposed = np.array([1, 5, 10, 20])
+    Rew_Proposed = get_reward_proposed()
+
     Effort, Reward = np.meshgrid(Eff_Proposed, Rew_Proposed)
 
     # All combinations; 3rd col is EP flag (0=DM only, 1=EP)
