@@ -1,4 +1,7 @@
 # websocket_server.py
+
+# Run: pip install numpy websockets uvicorn fastapi
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn

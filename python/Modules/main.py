@@ -127,7 +127,9 @@ if __name__ == "__main__":
     # --- Websocket setup ---
     streamer = None
     if cfg.ws_streaming.lower() == "true":
-        streamer = TrialStreamer("ws://127.0.0.1:8765/trials")
+        # streamer = TrialStreamer("ws://127.0.0.1:8765/trials")
+        streamer = TrialStreamer("ws://192.168.2.200:8765/trials")
+
         streamer.start()
 
     # --- PsychoPy window ---
