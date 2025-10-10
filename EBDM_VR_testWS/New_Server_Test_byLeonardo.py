@@ -26,10 +26,10 @@ async def run_trial(ws: WebSocket):
     await asyncio.sleep(1)
 
     # ITI (intertrial interval)
-    DurITI = 2
-    print("ITI")
-    await ws.send_json({"event_": "ITI", "DurITI": DurITI})
-    await asyncio.sleep(DurITI)
+    # DurITI = 2
+    # print("ITI")
+    # await ws.send_json({"event_": "ITI", "DurITI": DurITI})
+    # await asyncio.sleep(DurITI)
 
     # Preparation to the DM phase
     dur_Prep_DM = random.uniform(1, 1.4)

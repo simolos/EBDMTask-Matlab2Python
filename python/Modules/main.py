@@ -183,7 +183,7 @@ if __name__ == "__main__":
             if streamer is not None:
                 streamer.send_event(
                 "Intertrial interval sent",
-                {"event_": "ITI", "DurITI": 1}
+                {"event_": "ITI", "DurITI": dur.Blank1}
                 )
 
             wait_with_escape(dur.Blank1 / 1000.0, kb, io)
@@ -218,18 +218,18 @@ if __name__ == "__main__":
                     KEYBOARD_MODE=True,
                 )
 
-                # --- Constant durations to server (small JSON) ---
-                if streamer is not None:
-                    streamer.send_event(
-                    "Intertrial interval sent",
-                    {"event_": "ITI", "DurITI": 1}
-                    )
+            # --- Constant durations to server (small JSON) ---
+            if streamer is not None:
+                streamer.send_event(
+                "Intertrial interval sent",
+                {"event_": "ITI", "DurITI": 1}
+                )
 
-                if streamer is not None:
-                    streamer.send_event(
-                    "End of the trial",
-                    {"event_": "EndOfTrial"}
-                    )
+            if streamer is not None:
+                streamer.send_event(
+                "End of the trial",
+                {"event_": "EndOfTrial"}
+                )
                 
 
 

@@ -1,28 +1,70 @@
-{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 70970.915296458, "t_recv": 70970.916685416}
-{"event_": "PrepDM", "dur_Prep_DM": 1.26, "event": "Preparation DM start", "proto": "v1", "t_send": 70972.931832791, "t_recv": 70972.932322458}
-{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.5, "Reward": 4, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 70974.214497333, "t_recv": 70974.21507125}
-{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 70978.210015916, "t_recv": 70978.2107105}
-{"event_": "PrepDM", "dur_Prep_DM": 1.33, "event": "Preparation DM start", "proto": "v1", "t_send": 70980.221360041, "t_recv": 70980.221812458}
-{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.65, "Reward": 3, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 70981.564004833, "t_recv": 70981.564421291}
-{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 70985.56931725, "t_recv": 70985.569719125}
-{"event_": "PrepDM", "dur_Prep_DM": 1.04, "event": "Preparation DM start", "proto": "v1", "t_send": 71073.550800041, "t_recv": 71073.552997708}
-{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.95, "Reward": 2, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 71074.604510875, "t_recv": 71074.604958458}
-{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 71464.132688875, "t_recv": 71464.134091541}
-{"event_": "PrepDM", "dur_Prep_DM": 1.03, "event": "Preparation DM start", "proto": "v1", "t_send": 71466.152959458, "t_recv": 71466.153515041}
-{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.65, "Reward": 2, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 71467.196396625, "t_recv": 71467.196867166}
-{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 72501.488839791, "t_recv": 72501.490504833}
-{"event_": "PrepDM", "dur_Prep_DM": 1.39, "event": "Preparation DM start", "proto": "v1", "t_send": 72503.508117291, "t_recv": 72503.508610666}
-{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.5, "Reward": 4, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 72504.927155291, "t_recv": 72504.927599291}
-{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 72508.911086291, "t_recv": 72508.91163525}
-{"event_": "PrepDM", "dur_Prep_DM": 1.04, "event": "Preparation DM start", "proto": "v1", "t_send": 72510.924545625, "t_recv": 72510.925130541}
-{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.95, "Reward": 2, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 72511.980455666, "t_recv": 72511.980907791}
-{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 73114.773175375, "t_recv": 73114.779703333}
-{"event_": "PrepDM", "dur_Prep_DM": 1.01, "event": "Preparation DM start", "proto": "v1", "t_send": 73116.790467583, "t_recv": 73116.790910208}
-{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.65, "Reward": 2, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 73117.81413125, "t_recv": 73117.814568916}
-{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 73167.670893041, "t_recv": 73167.67221175}
-{"event_": "PrepDM", "dur_Prep_DM": 1.3, "event": "Preparation DM start", "proto": "v1", "t_send": 73169.688039041, "t_recv": 73169.688454375}
-{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.8, "Reward": 1, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 73171.000572208, "t_recv": 73171.001024}
-{"event_": "DecisionFeedback", "DMFeedback": 0, "dur_DecisionFeedback": 1000, "event": "Decision Feedback", "proto": "v1", "t_send": 73173.007012541, "t_recv": 73173.007466791}
-{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 73174.003219958, "t_recv": 73174.003795458}
-{"event_": "PrepDM", "dur_Prep_DM": 1.3, "event": "Preparation DM start", "proto": "v1", "t_send": 73176.027984125, "t_recv": 73176.028537208}
-{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.95, "Reward": 1, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 73177.35937875, "t_recv": 73177.359855833}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 14673.1728381, "t_recv": 14673.1737056}
+{"event_": "PrepDM", "dur_Prep_DM": 1.27, "event": "Preparation DM start", "proto": "v1", "t_send": 14675.2043679, "t_recv": 14675.2051246}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.65, "Reward": 1, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 14676.4883286, "t_recv": 14676.4888652}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 14680.4959643, "t_recv": 14680.4982977}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 14680.4962896, "t_recv": 14680.4996924}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 14680.506668, "t_recv": 14680.5072727}
+{"event_": "PrepDM", "dur_Prep_DM": 1.33, "event": "Preparation DM start", "proto": "v1", "t_send": 14682.5546486, "t_recv": 14682.5553378}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.5, "Reward": 1, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 14683.938041, "t_recv": 14683.9391578}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 14687.9303669, "t_recv": 14687.9322513}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 14687.9306452, "t_recv": 14687.9335748}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 14687.9381878, "t_recv": 14687.9388174}
+{"event_": "PrepDM", "dur_Prep_DM": 1.07, "event": "Preparation DM start", "proto": "v1", "t_send": 14689.9711624, "t_recv": 14689.9717242}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.95, "Reward": 3, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 14691.0880545, "t_recv": 14691.0891667}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 14695.0842958, "t_recv": 14695.0855341}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 14695.0844481, "t_recv": 14695.0864522}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 14695.1043324, "t_recv": 14695.1051831}
+{"event_": "PrepDM", "dur_Prep_DM": 1.22, "event": "Preparation DM start", "proto": "v1", "t_send": 14697.1373583, "t_recv": 14697.1382614}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.8, "Reward": 4, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 14698.4040312, "t_recv": 14698.4048975}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 15314.5516703, "t_recv": 15314.552543}
+{"event_": "PrepDM", "dur_Prep_DM": 1.28, "event": "Preparation DM start", "proto": "v1", "t_send": 15316.6134375, "t_recv": 15316.6147063}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.5, "Reward": 1, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 15317.9505961, "t_recv": 15317.9519332}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 17932.4727619, "t_recv": 17932.4740032}
+{"event_": "PrepDM", "dur_Prep_DM": 1.07, "event": "Preparation DM start", "proto": "v1", "t_send": 17934.5055239, "t_recv": 17934.5064401}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.5, "Reward": 4, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 17935.5889729, "t_recv": 17935.5897643}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 17939.5928734, "t_recv": 17939.5936436}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 17939.5930693, "t_recv": 17939.5948277}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 17939.6072646, "t_recv": 17939.607879}
+{"event_": "PrepDM", "dur_Prep_DM": 1.39, "event": "Preparation DM start", "proto": "v1", "t_send": 17941.6220329, "t_recv": 17941.6226901}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18163.9108199, "t_recv": 18163.91209}
+{"event_": "PrepDM", "dur_Prep_DM": 1.4, "event": "Preparation DM start", "proto": "v1", "t_send": 18165.9434903, "t_recv": 18165.9442709}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.95, "Reward": 1, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 18167.360088, "t_recv": 18167.3609701}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18171.3465712, "t_recv": 18171.3474785}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 18171.3466765, "t_recv": 18171.348764}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18171.3604005, "t_recv": 18171.3611378}
+{"event_": "PrepDM", "dur_Prep_DM": 1.1, "event": "Preparation DM start", "proto": "v1", "t_send": 18173.393164, "t_recv": 18173.3940155}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.5, "Reward": 1, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 18174.5262329, "t_recv": 18174.5269834}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18178.5186535, "t_recv": 18178.5198455}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 18178.5189522, "t_recv": 18178.5207302}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18178.5269956, "t_recv": 18178.5276275}
+{"event_": "PrepDM", "dur_Prep_DM": 1.32, "event": "Preparation DM start", "proto": "v1", "t_send": 18180.5771804, "t_recv": 18180.5779268}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.8, "Reward": 3, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 18181.9428934, "t_recv": 18181.9438277}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18185.9548624, "t_recv": 18185.9557645}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 18185.9550127, "t_recv": 18185.9568566}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18185.9772366, "t_recv": 18185.9783465}
+{"event_": "PrepDM", "dur_Prep_DM": 1.0, "event": "Preparation DM start", "proto": "v1", "t_send": 18188.0259875, "t_recv": 18188.026656}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.65, "Reward": 3, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 18189.0768926, "t_recv": 18189.0781908}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18193.0395796, "t_recv": 18193.0402024}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 18193.0400039, "t_recv": 18193.0412047}
+{"trial": 4, "t": 30.177466000001004, "event": "Final feedback start", "proto": "v1", "t_send": 18193.040764, "t_recv": 18193.0419634}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18521.4055188, "t_recv": 18521.4068661}
+{"event_": "PrepDM", "dur_Prep_DM": 1.27, "event": "Preparation DM start", "proto": "v1", "t_send": 18523.4554086, "t_recv": 18523.4568162}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.95, "Reward": 3, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 18524.7608862, "t_recv": 18524.7621203}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18528.7339448, "t_recv": 18528.7350207}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 18528.7340779, "t_recv": 18528.7364394}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18528.7657933, "t_recv": 18528.7673408}
+{"event_": "PrepDM", "dur_Prep_DM": 1.07, "event": "Preparation DM start", "proto": "v1", "t_send": 18530.8092295, "t_recv": 18530.8102308}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.8, "Reward": 3, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 18531.9074237, "t_recv": 18531.9085748}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18535.8901395, "t_recv": 18535.8909375}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 18535.8903129, "t_recv": 18535.8917384}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18535.9046855, "t_recv": 18535.9055893}
+{"event_": "PrepDM", "dur_Prep_DM": 1.16, "event": "Preparation DM start", "proto": "v1", "t_send": 18537.9207222, "t_recv": 18537.9212089}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.5, "Reward": 4, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 18539.1045012, "t_recv": 18539.1050871}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18543.1063502, "t_recv": 18543.1073309}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 18543.106463, "t_recv": 18543.1083792}
+{"event_": "ITI", "DurITI": 2000, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18543.1212466, "t_recv": 18543.1220425}
+{"event_": "PrepDM", "dur_Prep_DM": 1.3, "event": "Preparation DM start", "proto": "v1", "t_send": 18545.1371669, "t_recv": 18545.1378489}
+{"event_": "DMphase", "dur_DMphase": 4.0, "Effort": 0.65, "Reward": 3, "event": "DM phase (offer presentation)", "proto": "v1", "t_send": 18546.4538968, "t_recv": 18546.4545}
+{"event_": "ITI", "DurITI": 1, "event": "Intertrial interval sent", "proto": "v1", "t_send": 18550.456988, "t_recv": 18550.4578901}
+{"event_": "EndOfTrial", "event": "End of the trial", "proto": "v1", "t_send": 18550.4571123, "t_recv": 18550.4589012}
+{"trial": 4, "t": 30.093688400000246, "event": "Final feedback start", "proto": "v1", "t_send": 18550.4575876, "t_recv": 18550.4596624}
