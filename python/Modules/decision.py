@@ -96,8 +96,8 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
                 RewardLevel = int(np.where(allRewards == currentReward)[0][0]) + 1
                 streamer.send_event(
                     "DM phase (offer presentation)",
-                    {"event_": "DMphase", "dur_DMphase": round(DM_S,2), "Effort": float(row['effort']), "Reward": RewardLevel}
-                    )                 
+                    {"event_": "DMphase", "dur_DMphase": 6, "Effort": float(row['effort']), "Reward": RewardLevel}
+                    )     # round(DM_S,2)           
             start_trigger_sent = True
 
         # Poll keys only if response not yet made and still inside DM window
@@ -129,7 +129,7 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
                         if cfg.ws_streaming.lower() == "true":
                             streamer.send_event(
                             "Decision Feedback",
-                            {"event_": "DecisionFeedback", "DMFeedback": resp, "dur_DecisionFeedback": dur.Feedback}
+                            {"event_": "DecisionFeedback", "DMFeedback": resp, "dur_DecisionFeedback": dur.Feedback / 1000}
                             )                 
 
 

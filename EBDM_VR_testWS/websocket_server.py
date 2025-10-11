@@ -49,6 +49,7 @@ async def broadcast_json(data: dict, sender: Optional[WebSocket] = None):
         if ws == sender:
             continue
         try:
+            print('BROADCASTING AGAIN')
             await ws.send_json(data)
         except Exception as e:
             logging.warning("[SRV] Broadcast failed to a client: %s", e)
@@ -67,6 +68,7 @@ async def trials_ws(ws: WebSocket):
         while True:
             msg = await ws.receive()
             if "text" in msg:
+                
                 text = msg["text"]
                 try:
                     data = json.loads(text)
@@ -83,7 +85,7 @@ async def trials_ws(ws: WebSocket):
                 await broadcast_json(data, sender=ws)
 
                 # --- ACK to sender (optional) ---
-                await ws.send_json({"event": "ack", "ack_of": data.get("event_") or data.get("event")})
+                # await ws.send_json({"event": "ack", "ack_of": data.get("event_") or data.get("event")})
 
             elif "bytes" in msg:
                 logging.warning("[SRV] Binary data ignored in this simplified broadcast server")

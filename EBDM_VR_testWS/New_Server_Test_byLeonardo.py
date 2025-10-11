@@ -8,6 +8,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import numpy as np
+import json
 
 app = FastAPI()
 
@@ -20,16 +21,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class WebSocketWithLog():
+    def __init__(self, ws: WebSocket, log_path: str):
+        self._ws = ws
+        self._log_path = log_path
+    async def send_json(self, payload):
+        with open(self._log_path, 'a') as f:
+            f.write(f'{json.dumps(payload)}\n')
+        await self._ws.send_json(payload)
+
+
 # ---- TRIAL 1 EP success
-async def run_trial(ws: WebSocket):
+async def run_trial(ws: WebSocketWithLog):
     print("Waiting 1 seconds before trial_beginning...")
     await asyncio.sleep(1)
 
     # ITI (intertrial interval)
-    # DurITI = 2
-    # print("ITI")
-    # await ws.send_json({"event_": "ITI", "DurITI": DurITI})
-    # await asyncio.sleep(DurITI)
+    DurITI = 2
+    print("ITI")
+    await ws.send_json({"event_": "ITI", "DurITI": DurITI})
+    await asyncio.sleep(DurITI)
 
     # Preparation to the DM phase
     dur_Prep_DM = random.uniform(1, 1.4)
@@ -67,7 +78,7 @@ async def run_trial(ws: WebSocket):
         {"event_": "EPphase", "dur_EPphase": round(dur_EPphase, 2), "cursor_pos": round(opening_percentage, 2)})
 
     # Simulate real door opening
-    freq = 10  # Hz (screen sampling rate)
+    freq = 120  # Hz (screen sampling rate)
     n_samples = int(dur_EPphase * freq)
     base_values = np.linspace(0.05, 0.97, n_samples)
     noise = np.random.normal(0, 0.01, size=n_samples)  # std dev 0.01
@@ -100,7 +111,7 @@ async def run_trial(ws: WebSocket):
     await ws.send_json({"event_": "EndOfTrial"})
 
 # ---- TRIAL 2 EP anticipation
-async def run_trial2(ws: WebSocket):
+async def run_trial2(ws: WebSocketWithLog):
     # Wait 1 seconds before starting the trial
     print("Waiting 1 seconds before trial_beginning...")
     await asyncio.sleep(1)
@@ -166,18 +177,22 @@ async def trials_ws(ws: WebSocket):
     await ws.accept()
     print("[SRV] Client connesso a /trials")
 
+    ws_with_log = WebSocketWithLog(ws, "control_events_byLeonardo.json")
+
     try:
         while True:
-            # Loop asincrono che controlla la tastiera
-            if keyboard.is_pressed("1"):  # premi 1 per trial 1
-                print("[SRV] Space pressed -> starting trial")
-                await run_trial(ws)
-                await asyncio.sleep(0.5)  # debounce per non ripetere subito
-            if keyboard.is_pressed("2"): # premi 2 per trial 2
-                print("[SRV] Enter pressed -> run_trial2")
-                await run_trial2(ws)
-                await asyncio.sleep(0.5)
-            await asyncio.sleep(0.05)
+            await run_trial2(ws_with_log) # or run_trial2
+
+            # # Loop asincrono che controlla la tastiera
+            # if keyboard.is_pressed("1"):  # premi 1 per trial 1
+            #     print("[SRV] Space pressed -> starting trial")
+            #     await run_trial(ws)
+            #     await asyncio.sleep(0.5)  # debounce per non ripetere subito
+            # if keyboard.is_pressed("2"): # premi 2 per trial 2
+            #     print("[SRV] Enter pressed -> run_trial2")
+            #     await run_trial2(ws)
+            #     await asyncio.sleep(0.5)
+            # await asyncio.sleep(0.05)
     except Exception as e:
         print(f"[SRV] WebSocket error: {e}")
 

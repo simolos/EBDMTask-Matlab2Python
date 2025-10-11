@@ -183,7 +183,7 @@ if __name__ == "__main__":
             if streamer is not None:
                 streamer.send_event(
                 "Intertrial interval sent",
-                {"event_": "ITI", "DurITI": dur.Blank1}
+                {"event_": "ITI", "DurITI": (dur.Blank1 / 1000)} 
                 )
 
             wait_with_escape(dur.Blank1 / 1000.0, kb, io)
@@ -222,7 +222,7 @@ if __name__ == "__main__":
             if streamer is not None:
                 streamer.send_event(
                 "Intertrial interval sent",
-                {"event_": "ITI", "DurITI": 1}
+                {"event_": "ITI", "DurITI": (dur.Blank1 / 1000)}
                 )
 
             if streamer is not None:

@@ -56,7 +56,7 @@ class TrialStreamer:
         if not self._connected or not self.ws:
             logging.warning("[WS] not connected; drop JSON event")
             return
-        msg = {**payload, "event": event, "proto": self.proto, "t_send": time.perf_counter()}
+        msg = {**payload} # "event": event, "proto": self.proto, "t_send": time.perf_counter()
         s = json.dumps(msg, separators=(",", ":"))  # compact
         asyncio.run_coroutine_threadsafe(self.ws.send(s), self.loop)
 

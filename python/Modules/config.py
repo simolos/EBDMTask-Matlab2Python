@@ -213,17 +213,17 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
     """Return a dict of per-phase durations (ms) based on population and eyetracker flag."""
     dur = Duration()
 
-    if population == Population.Healthy:  
+    if population == Population.Healthy:  # I AM FORCING IT TO BE LIKE OLD!!!
 
         if task == Task.EBDM:
 
             dur.Blank1 = 2000
             dur.DM_Preparation = [1000, 1400]
-            dur.DM = 4000
+            dur.DM = 6000
             dur.TimeAfterDMade = 1000
             dur.TimeAfterPositionRight = 1000
             dur.GetReadyForEP = 1000
-            dur.EP_Preparation = [1000, 1400]
+            dur.EP_Preparation = [1800, 2200]
             dur.Task = 8000
             dur.Blank2 = 500
             dur.Feedback = 1000
@@ -236,7 +236,7 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
             dur.TimeAfterPositionRight = 1000
             dur.GetReadyForEP = 1000
             dur.EP_Preparation = [1000, 1400]
-            dur.Task = 8000
+            dur.Task = 6000
             dur.Blank2 = 500
             dur.Feedback = 1000
             dur.TimeForPupilBaselineBack = 3000 
@@ -246,7 +246,7 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
     elif Population == Population.Old: 
 
 
-        if task == Task.EBDM:
+        if task == Task.EBDM: 
 
             dur.Blank1 = 2000
             dur.DM_Preparation = [1000, 1400]

@@ -123,8 +123,8 @@ def get_ready_phase(
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
         "Preparation EP start",
-        {"event_": "PrepEP", "dur_Prep_EP": round((dur_prep_ms / 1000),2)}
-        )
+        {"event_": "PrepEP", "dur_Prep_EP": 1.28} 
+        ) # round((dur_prep_ms / 1000),2)
         
 
     while prepEPClock.getTime() < (dur_prep_ms / 1000.0):
@@ -135,20 +135,20 @@ def get_ready_phase(
                 if flag_MultipleKeyPressed == 2:
                     if key_name == activeKey and ev.type == KEY_RELEASE:
                         trials.at[i, 'Anticipation_EP'] = 1
-                        if cfg.ws_streaming.lower() == "true":
-                            streamer.send_event(
-                            "Preparation EP start",
-                            {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
-                            )
+                        # if cfg.ws_streaming.lower() == "true":
+                        #     streamer.send_event(
+                        #     "Preparation to the EPFeedback phase",
+                        #     {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
+                        #     )
                         break
                 else:
                     if key_name == activeKey and ev.type == KEY_PRESS:
                         trials.at[i, 'Anticipation_EP'] = 1
-                        if cfg.ws_streaming.lower() == "true":
-                            streamer.send_event(
-                            "Preparation EP start",
-                            {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
-                            )                        
+                        # if cfg.ws_streaming.lower() == "true":
+                        #     streamer.send_event(
+                        #     "Preparation to the EPFeedback phase",
+                        #     {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
+                        #     )                        
                         break
         core.wait(0.001)
 
@@ -188,8 +188,8 @@ def effort_production_phase(
     if cfg.ws_streaming.lower() == "true":
         opening_percentage = 1 - float(trials.loc[i, 'effort'])
         streamer.send_event(
-            "Preparation EP start",
-            {"event_": "EPphase", "dur_EPphase": dur.Task, "cursor_pos": opening_percentage}
+            "EP start",
+            {"event_": "EPphase", "dur_EPphase": dur.Task / 1000, "cursor_pos": opening_percentage}
             )
 
     # Setup
@@ -269,8 +269,8 @@ def effort_production_phase(
             CURSOR[f, i] = cursor_pos
             if cfg.ws_streaming.lower() == "true":
                 streamer.send_event(
-                    "Preparation EP start",
-                    {"event_": "EPphase", "dur_EPphase": dur.Task, "cursor_pos": cursor_pos}
+                    "EP phase",
+                    {"event_": "EPphase", "dur_EPphase": 6, "cursor_pos": round(cursor_pos, 2)}
                     )
 
             # Dynamic cursor
@@ -301,7 +301,7 @@ def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg):
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
             "Preparation to the EPFeedback phase",
-            {"event_": "PrepEPFeedback", "dur_Prep_EPFeedback": dur.Blank2}
+            {"event_": "PreEPFeedback", "dur_Prep_EPFeedback": dur.Blank2 / 1000}
             )
 
 
@@ -316,12 +316,15 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
     # cfg = parse_args("main")
     
     if trials.loc[i, 'Anticipation_EP'] == 1:
-        trials.at[i, 'success'] = 0
+        trials.at[i, 'success'] = -1
         for elem in screens.bAnticip:
             elem.draw()
         TaskTimings.append((expClock.getTime(), f"T{i} FeedbackAnticip"))
         if cfg.ws_streaming.lower() == "true":
-            streamer.send_event("FeedbackAnticip", {"trial": i + 1, "t": expClock.getTime()})
+            streamer.send_event(
+            "EPFeedback",
+            {"event_": "EPFeedback", "EPFeedback": int(trials.at[i, 'success']), "dur_EPFeedback": dur.Feedback / 1000}
+            )
         win.flip()
         core.wait(dur.Feedback / 1000.0)
         return
@@ -330,28 +333,23 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
         eff_t = float(trials.loc[i, 'effort'])
         mean_onsets = float(np.nanmean(keypr[:, i]))
         tap_rate_norm = ((mean_onsets * Hz) / MTF)
-        success = 1 if tap_rate_norm >= eff_t else (-1 if tap_rate_norm < 0.7 * eff_t else 0)
-
+        success = 1 if tap_rate_norm >= eff_t else 0 
         trials.at[i, 'success'] = success
         if cfg.ws_streaming.lower() == "true":
-            streamer.send_event("Feedback", {"trial": i + 1, "Result": success, "t": expClock.getTime()})
             streamer.send_event(
             "EPFeedback",
-            {"event_": "EPFeedback", "EPFeedback": success, "dur_EPFeedback": dur.Feedback}
+            {"event_": "EPFeedback", "EPFeedback": success, "dur_EPFeedback": dur.Feedback / 1000}
             )
 
         if success == 1:
             for elem in screens.bSuccess:
                 elem.draw()
             TaskTimings.append((expClock.getTime(), f"T{i} FeedbackSuccess"))
-        elif success == -1:
-            for elem in screens.bFailure:
-                elem.draw()
-            TaskTimings.append((expClock.getTime(), f"T{i} FeedbackBigFailure"))
-        else:
+        elif success == 0:
             for elem in screens.bFailure:
                 elem.draw()
             TaskTimings.append((expClock.getTime(), f"T{i} FeedbackFailure"))
+        
 
         win.flip()
         core.wait(dur.Feedback / 1000.0)
