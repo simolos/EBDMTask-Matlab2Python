@@ -295,6 +295,7 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
 def get_effort_proposed(population:Population):
     if population == Population.Healthy:
         return np.array([0.5, 0.65, 0.8, 0.95])
+
     else:
         return np.array([0.45, 0.6, 0.75, 0.9])
     

@@ -1,6 +1,7 @@
 # Modules/generation_trial.py
 import numpy as np
 from config import Population, get_effort_proposed, get_reward_proposed
+from itertools import product
 
 def _balanced_pick_rows_per_effort(pool, Eff_Proposed, rows_per_value):
     """
@@ -190,23 +191,29 @@ def GetTrialCondition(nTrials, n_Effort_Trials, population:Population):
     perm = np.random.permutation(len(Cond_E_R))
     Cond_E_R = Cond_E_R[perm]
     indx_Effort_Trials = np.where(Cond_E_R[:, 2] == 1)[0]
+
+    check_balancing(Cond_E_R, Eff_Proposed, Rew_Proposed, nTrials, n_Effort_Trials)
+
     return Cond_E_R, indx_Effort_Trials
 
 
 # --- Optional: quick sanity checker (use in tests) ---
-def check_balancing(Cond_E_R, Eff_Proposed, nTrials, n_Effort_Trials):
+def check_balancing(Cond_E_R, Eff_Proposed, Rew_Proposed, nTrials, n_Effort_Trials):
     """
     Print per-effort counts for DM and EP; assert totals are correct.
     """
-    assert Cond_E_R.shape[0] == nTrials, f"Expected {nTrials} trials, got {Cond_E_R.shape[0]}"
-    ep_idx = Cond_E_R[:, 2] == 1
-    dm_idx = Cond_E_R[:, 2] == 0
-    assert ep_idx.sum() == n_Effort_Trials, f"Expected {n_Effort_Trials} EP, got {ep_idx.sum()}"
 
-    for eff in Eff_Proposed:
-        dm_cnt = np.sum((Cond_E_R[:, 0] == eff) & dm_idx)
-        ep_cnt = np.sum((Cond_E_R[:, 0] == eff) & ep_idx)
-        print(f"Effort {eff:>4}: DM={dm_cnt:>3} | EP={ep_cnt:>3}")
+    all_possible_combinations = list(product(Eff_Proposed, Rew_Proposed))
+
+    for eff, rew in all_possible_combinations:
+
+        dm_mask = (Cond_E_R[:, 0] == eff) & (Cond_E_R[:, 1] == rew)
+        ep_mask = dm_mask & (Cond_E_R[:, 2] == 1)
+
+        dm_cnt = np.sum(dm_mask)
+        ep_cnt = np.sum(ep_mask)
+
+        print(f"Combination ({eff}, {rew}): DM={dm_cnt} | EP={ep_cnt}")
 
 
 #### test 

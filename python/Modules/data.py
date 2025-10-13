@@ -106,10 +106,11 @@ class DataRecorder:
         tasktimings: list | pd.DataFrame | None,
         Hz: float | None,
         MTF: float | None,
+        single_MTF: float | None,
+        TotalGain: float | None = None,
         csv_mode: str = "long",
         mode: int | None = None,                 # <<< NEW
         durations: dict | None = None,           # <<< NEW
-        single_MTF: int | None = None
     ) -> str:
         """
         Save everything (trials + CURSOR + KEYPR + TaskTimings + meta) into ONE file.
@@ -186,12 +187,22 @@ class DataRecorder:
             mdict = {
                 "CURSOR": cursor,
                 "KEYPR":  keypr,
-                "Hz":     float(Hz) if Hz is not None else None,
-                "MTF":     float(MTF) if MTF is not None else None,
                 "prefix": self.prefix,
-                "trials": {col: trials_df[col].to_numpy() for col in trials_df.columns},
-                "mode":   int(mode) if mode is not None else None,
+                "trials": {col: trials_df[col].to_numpy() for col in trials_df.columns}
             }
+
+            if Hz is not None:
+                mdict["Hz"] = float(Hz)
+            if MTF is not None:
+                mdict["MTF"] = float(MTF)
+            if single_MTF is not None:
+                mdict["SingleFreq"] = np.asarray(single_MTF, dtype=float)
+            if TotalGain is not None:
+                mdict["total_gains"] = float(TotalGain)
+            if mode is not None:
+                mdict["mode"] = int(mode)      
+            
+
             if tasktimings:
                 if isinstance(tasktimings, pd.DataFrame):
                     mdict["TaskTimings"] = tasktimings.to_numpy(object)

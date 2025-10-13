@@ -39,6 +39,7 @@ def save_and_quit(
     Hz,
     MTF,
     trials=None,
+    TotalGain=None,
     all_fmt="xlsx",   # choose: "csv" | "xlsx" | "mat"
     csv_mode="long",  # currently only "long" is implemented
     mode=None,        
@@ -62,6 +63,7 @@ def save_and_quit(
                 tasktimings=TaskTimings,
                 Hz=Hz,
                 MTF=MTF,
+                TotalGain=TotalGain,
                 csv_mode=csv_mode,
                 mode=mode,                
                 durations=durations, 
@@ -82,6 +84,7 @@ def save_and_quit(
                     tasktimings=TaskTimings,
                     Hz=Hz,
                     MTF=MTF,
+                    TotalGain=TotalGain,
                     csv_mode=csv_mode,
                 )
             except Exception as e2:
@@ -145,7 +148,6 @@ if __name__ == "__main__":
     kb, io = init_keyboard()
     expClock = core.Clock()
 
-    TotalGain = 0
     TaskTimings = []
     MTF = cfg.MTF
     Hz = win.getActualFrameRate(nIdentical=20, nMaxFrames=200, nWarmUpFrames=10, threshold=1)
@@ -232,11 +234,6 @@ if __name__ == "__main__":
                 )
                 
 
-
-                # Only add gain when no anticipation flag
-                if trials.loc[i, 'Anticipation_EP'] == 0:
-                    TotalGain += trials.loc[i, 'reward'] * trials.loc[i, 'success']
-
             # --- Record enriched trial row (Hz, MTF) ---
             trial_dict = trials.loc[i].to_dict()
             trial_dict.update({"Hz": Hz, "MTF": MTF, "mode": cfg.mode})
@@ -247,12 +244,20 @@ if __name__ == "__main__":
             print("recorded okay")
 
         # --- Final feedback UI ---
-        if streamer is not None:
-            streamer.send_event("Final feedback start", {"trial": i + 1, "t": expClock.getTime()})
+        
+        # Implement here final trigger to the websocket 
+
+        # Compute total gain
+        mask = (
+            ((trials['Acceptance'] == 1) & (trials['EffortProduction'].fillna(0) == 0))
+            | ((trials['Acceptance'] == 1) & (trials['EffortProduction'].fillna(0) == 1) & (trials['success'].fillna(0) == 1))
+        )
+        TotalGain = trials.loc[mask, 'reward'].sum() / 100
+    
         for elem in screens.bRectCross:
             elem.draw()
         win.flip()
-        for elem in screens._create_ffeedback_buffer(float(TotalGain / 100)):
+        for elem in screens._create_ffeedback_buffer(float(TotalGain)):
             elem.draw()
         win.flip()
         wait_with_escape(dur.FinalFeedback / 1000.0, kb, io)
@@ -283,6 +288,7 @@ if __name__ == "__main__":
             Hz=Hz,
             MTF=MTF,
             trials=trials,
+            TotalGain=TotalGain,
             all_fmt="mat",  # or "mat" or "csv"
             mode=cfg.mode,     
             durations=asdict(dur),      

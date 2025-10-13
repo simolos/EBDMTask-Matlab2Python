@@ -74,8 +74,13 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
             break
 
         # Draw dynamic decision buffer with tick when 'choice' is set
-        eff_norm = (float(row['effort']) - 0.3) / 0.7
-        eff_norm = max(0.0, min(1.0, eff_norm))
+        if cfg.ws_streaming.lower() == "true": # If streaming to VR, different effort rescaling!
+            eff_norm = 1 - float(row['effort'])                  
+        else:
+            eff_norm = (float(row['effort']) - 0.3) / 0.7
+            eff_norm = max(0.0, min(1.0, eff_norm))
+
+
 
         elems = screens._create_decision_dynamic_buffer(
             effort_level=eff_norm,
@@ -94,6 +99,7 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
                 allRewards = get_reward_proposed()
                 currentReward = float(row['reward'])
                 RewardLevel = int(np.where(allRewards == currentReward)[0][0]) + 1
+
                 streamer.send_event(
                     "DM phase (offer presentation)",
                     {"event_": "DMphase", "dur_DMphase": 6, "Effort": float(row['effort']), "Reward": RewardLevel}

@@ -173,7 +173,11 @@ def effort_production_phase(
     for elem in screens.bTaskWait:
         elem.draw()
     if task==Task.EBDM:
-        target_effort = (float(trials.loc[i, 'effort']) - 0.3) / 0.7
+        if cfg.ws_streaming.lower() == "true": # If streaming to VR, different effort rescaling!
+            target_effort = 1 - float(trials.loc[i, 'effort'])
+
+        else:
+            target_effort = (float(trials.loc[i, 'effort']) - 0.3) / (1-0.3) # 0.7 replaced by 1-0.3
         reward_val = float(trials.loc[i, 'reward']) 
         for elem in screens._create_reward_buffer(reward_val, target_effort):
             elem.draw()
@@ -260,11 +264,19 @@ def effort_production_phase(
         # Cursor from mean onset rate
         if task==Task.EBDM:
             mean_onsets = np.mean(keypr[: f + 1, i]) if f >= 0 else 0.0
-            cursor_pos = (((mean_onsets * Hz) / MTF) - 0.3) / 0.7
-            if cursor_pos < 0:
-                cursor_pos = 0
-            elif cursor_pos > 1:
-                cursor_pos = 1
+            if cfg.ws_streaming.lower() == "true": # If streaming to VR, different effort rescaling!
+                tap_rate = ((mean_onsets * Hz) / MTF) # I need to make it a fractional progress relative to target effort!! 
+                cursor_pos = (1 - float(trials.loc[i, 'effort'])) + (min(tap_rate / float(trials.loc[i, 'effort']), 1)  * float(trials.loc[i, 'effort']) )
+                if cursor_pos < 0:
+                    cursor_pos = 0
+                elif cursor_pos > 1:
+                    cursor_pos = 1
+            else:
+                cursor_pos = (((mean_onsets * Hz) / MTF) - 0.3) / 0.7
+                if cursor_pos < 0:
+                    cursor_pos = 0
+                elif cursor_pos > 1:
+                    cursor_pos = 1
 
             CURSOR[f, i] = cursor_pos
             if cfg.ws_streaming.lower() == "true":
@@ -336,6 +348,7 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
         success = 1 if tap_rate_norm >= eff_t else 0 
         trials.at[i, 'success'] = success
         if cfg.ws_streaming.lower() == "true":
+
             streamer.send_event(
             "EPFeedback",
             {"event_": "EPFeedback", "EPFeedback": success, "dur_EPFeedback": dur.Feedback / 1000}

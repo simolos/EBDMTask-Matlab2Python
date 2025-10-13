@@ -66,6 +66,7 @@ def save_and_quit(
                 tasktimings=TaskTimings,
                 Hz=Hz,
                 MTF=MTF,
+                single_MTF=single_MTF,
                 csv_mode=csv_mode,
                 mode=mode,                
                 durations=durations, 
