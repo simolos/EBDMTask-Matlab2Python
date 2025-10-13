@@ -47,10 +47,6 @@ def parse_args(task:Task):
         "-s", "--subject-id", type=str, required=True,
         help="Participant identifier (e.g., S01)"
     )
-    parser.add_argument(
-        "-b", "--block-id", type=str, required=True,
-        help="Block identifier"
-    )  
 
     # --- Language ---
     parser.add_argument(
@@ -108,6 +104,12 @@ def parse_args(task:Task):
 
     if task == Task.EBDM:
 
+        # --- Block name ---
+        parser.add_argument(
+            "-b", "--block-id", type=str, required=True,
+            help="Block identifier"
+        )  
+
         # --- Maximum tapping frequency ---
         parser.add_argument(
             "-mtf", "--MTF", type=int, required=True,
@@ -126,15 +128,36 @@ def parse_args(task:Task):
 
     elif task == Task.MTF:
 
-        # --- Design parameters ---
+        # --- Block name ---
         parser.add_argument(
-            "-n", "--nTrials", type=int, default=4,
-            help="Number of trials in the maximum tapping frequency task (typ 4)"
-        )       
-        parser.add_argument(
+            "-b", "--block-id", type=str, required=True, choices=["MTF_PRE", "MTF_VF"],
+            help="Block identifier"
+        )  
+
+        args = parser.parse_args()
+
+        if args.block_id == "MTF_PRE":
+            # --- Design parameters ---
+            parser.add_argument(
+                "-n", "--nTrials", type=int, default=4,
+                help="Number of trials in the maximum tapping frequency task (typ 4)"
+            )     
+            parser.add_argument(
             "-e", "--nEffortTrials", type=int, default=4,
             help="Number of effort trials in the maximum tapping frequency task w/o visual feedback (typ 4)"
-        )
+            )
+
+        elif args.block_id == "MTF_VF": 
+            # --- Design parameters ---
+            parser.add_argument(
+                "-n", "--nTrials", type=int, default=3,
+                help="Number of trials in the maximum tapping frequency task w visual feedback (typ 3)"
+            )     
+            parser.add_argument(
+            "-e", "--nEffortTrials", type=int, default=3,
+            help="Number of effort trials in the maximum tapping frequency task w visual feedback (typ 3)"
+            )
+
 
     parser.add_argument(
         "--log-level", type=str, choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],

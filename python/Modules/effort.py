@@ -183,6 +183,12 @@ def effort_production_phase(
             elem.draw()
         for elem in screens._create_bar_buffer(target_effort):
             elem.draw()
+
+    elif task==Task.MTF and cfg.block_if == "MTF_VF":
+            target_effort = 0.5
+            for elem in screens._create_bar_buffer(target_effort):
+                elem.draw()
+
     win.flip()
 
 
@@ -190,7 +196,7 @@ def effort_production_phase(
     EPClock = core.Clock()
     TaskTimings.append((expClock.getTime(), f"T{i} Start EP"))
     if cfg.ws_streaming.lower() == "true":
-        opening_percentage = 1 - float(trials.loc[i, 'effort'])
+        opening_percentage = target_effort
         streamer.send_event(
             "EP start",
             {"event_": "EPphase", "dur_EPphase": dur.Task / 1000, "cursor_pos": opening_percentage}
@@ -218,8 +224,11 @@ def effort_production_phase(
                 elem.draw()
             for elem in screens._create_bar_buffer(target_effort):
                 elem.draw()
-        elif task==Task.MTF:
+        elif task==Task.MTF and cfg.block_id == "MTF_PRE":
             for elem in screens.bTaskWaitCross:
+                elem.draw()
+        elif task==Task.MTF and cfg.block_id == "MTF_VF":
+            for elem in screens._create_bar_buffer(target_effort):
                 elem.draw()
 
         for elem in screens.bGoEP:

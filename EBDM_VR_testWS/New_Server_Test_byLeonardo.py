@@ -181,7 +181,7 @@ async def trials_ws(ws: WebSocket):
 
     try:
         while True:
-            await run_trial2(ws_with_log) # or run_trial2
+            await run_trial(ws_with_log) # or run_trial2
 
             # # Loop asincrono che controlla la tastiera
             # if keyboard.is_pressed("1"):  # premi 1 per trial 1

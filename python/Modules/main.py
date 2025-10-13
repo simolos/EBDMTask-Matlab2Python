@@ -116,6 +116,15 @@ if __name__ == "__main__":
     # Trials & durations
     dur = get_task_duration(cfg.eyetracker, cfg.population, Task.EBDM)
     cond_er, indx_effort_trials = GetTrialCondition(cfg.nTrials, cfg.nEffortTrials, cfg.population)
+
+    # TEST
+    print(cond_er)
+    cond_er[0,0] = 0.95
+    cond_er[0,1] = 1
+    cond_er[1,0] = 0.5
+    cond_er[1,1] = 20
+    print(cond_er)
+
     trials = init_trials(
         n_trials=cfg.nTrials, 
         cond_e_r=cond_er, 
