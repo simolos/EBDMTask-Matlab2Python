@@ -106,7 +106,7 @@ class DataRecorder:
         tasktimings: list | pd.DataFrame | None,
         Hz: float | None,
         MTF: float | None,
-        single_MTF: float | None,
+        single_MTF: float | None = None,
         TotalGain: float | None = None,
         csv_mode: str = "long",
         mode: int | None = None,                 # <<< NEW

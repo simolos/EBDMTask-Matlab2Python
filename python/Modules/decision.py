@@ -102,7 +102,7 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
 
                 streamer.send_event(
                     "DM phase (offer presentation)",
-                    {"event_": "DMphase", "dur_DMphase": 6, "Effort": float(row['effort']), "Reward": RewardLevel}
+                    {"event_": "DMphase", "dur_DMphase": 6, "Effort": 1 - eff_norm, "Reward": RewardLevel} # this 1-eff_norm is already done in the VR, here it only compensates for line 78 and it's for lab-based coherent visualization during VR
                     )     # round(DM_S,2)           
             start_trigger_sent = True
 

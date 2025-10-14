@@ -123,8 +123,8 @@ def get_ready_phase(
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
         "Preparation EP start",
-        {"event_": "PrepEP", "dur_Prep_EP": 1.28} 
-        ) # round((dur_prep_ms / 1000),2)
+        {"event_": "PrepEP", "dur_Prep_EP": round((dur_prep_ms / 1000),2)} 
+        ) 
         
 
     while prepEPClock.getTime() < (dur_prep_ms / 1000.0):
@@ -165,6 +165,7 @@ def effort_production_phase(
       - Draw EP layers and flip at Hz pace until nFrames.
     """
 
+
     # --- Configuration
     # cfg = parse_args("main")
 
@@ -184,23 +185,22 @@ def effort_production_phase(
         for elem in screens._create_bar_buffer(target_effort):
             elem.draw()
 
-    elif task==Task.MTF and cfg.block_if == "MTF_VF":
+    elif task==Task.MTF and cfg.block_id == "MTF_VF":
             target_effort = 0.5
             for elem in screens._create_bar_buffer(target_effort):
                 elem.draw()
 
     win.flip()
 
-
-
     EPClock = core.Clock()
     TaskTimings.append((expClock.getTime(), f"T{i} Start EP"))
-    if cfg.ws_streaming.lower() == "true":
-        opening_percentage = target_effort
-        streamer.send_event(
-            "EP start",
-            {"event_": "EPphase", "dur_EPphase": dur.Task / 1000, "cursor_pos": opening_percentage}
-            )
+    # if cfg.ws_streaming.lower() == "true":
+    #     opening_percentage = target_effort - factor_compensating_for_leonardosbug # -0.05 to compensate Leonardo's bug
+    #     streamer.send_event(
+    #         "EP start",
+    #         {"event_": "EPphase", "dur_EPphase": dur.Task / 1000, "cursor_pos": opening_percentage}
+    #         )
+
 
     # Setup
     oneframe = 1.0 / float(Hz)
@@ -228,11 +228,14 @@ def effort_production_phase(
             for elem in screens.bTaskWaitCross:
                 elem.draw()
         elif task==Task.MTF and cfg.block_id == "MTF_VF":
+            for elem in screens.bTaskWait:
+                elem.draw()
             for elem in screens._create_bar_buffer(target_effort):
                 elem.draw()
 
         for elem in screens.bGoEP:
             elem.draw()
+
 
 
         # Onset detection per mode
@@ -274,8 +277,11 @@ def effort_production_phase(
         if task==Task.EBDM:
             mean_onsets = np.mean(keypr[: f + 1, i]) if f >= 0 else 0.0
             if cfg.ws_streaming.lower() == "true": # If streaming to VR, different effort rescaling!
-                tap_rate = ((mean_onsets * Hz) / MTF) # I need to make it a fractional progress relative to target effort!! 
-                cursor_pos = (1 - float(trials.loc[i, 'effort'])) + (min(tap_rate / float(trials.loc[i, 'effort']), 1)  * float(trials.loc[i, 'effort']) )
+                e = float(trials.loc[i, 'effort'])
+                offset = 1-e # shit by Leonardo
+                cursor_pos = ((mean_onsets * Hz) / MTF) / e
+                cursor_pos = (cursor_pos - offset) * (1 + offset)
+                
                 if cursor_pos < 0:
                     cursor_pos = 0
                 elif cursor_pos > 1:
@@ -291,12 +297,27 @@ def effort_production_phase(
             if cfg.ws_streaming.lower() == "true":
                 streamer.send_event(
                     "EP phase",
-                    {"event_": "EPphase", "dur_EPphase": 6, "cursor_pos": round(cursor_pos, 2)}
+                    {"event_": "EPphase", "dur_EPphase": 6, "cursor_pos": round(cursor_pos, 2)} # -0.05 to compensate for Leonardo's bug
                     )
 
             # Dynamic cursor
             for elem in screens._create_cursor_dynamic_buffer(CURSOR[f, i]):
                 elem.draw()
+
+        elif task==Task.MTF and cfg.block_id == 'MTF_VF':
+            mean_onsets = np.mean(keypr[: f + 1, i]) if f >= 0 else 0.0
+
+            cursor_pos = (((mean_onsets * Hz) / cfg.MTF) - 0.3) / 1.4 
+            if cursor_pos < 0:
+                cursor_pos = 0
+            elif cursor_pos > 1:
+                cursor_pos = 1
+            CURSOR[f, i] = cursor_pos
+
+            # Dynamic cursor
+            for elem in screens._create_cursor_dynamic_buffer(CURSOR[f, i]):
+                elem.draw()
+
         win.flip()
 
         f += 1

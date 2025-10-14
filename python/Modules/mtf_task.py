@@ -194,7 +194,10 @@ try:
         )
 
         single_MTF = compute_single_MTF(task=Task.MTF, keypr=keypr, durationEP=dur.Task / 1000) 
-        MTF = max(single_MTF)
+        if Task==Task.MTF and cfg.block_id == 'MTF_PRE':
+            MTF = max(single_MTF)
+        elif Task == Task.MTF and cfg.block_id == 'MTF_VF':
+            MTF = np.median(single_MTF)
 
         # --- Record enriched trial row (Hz, MTF) ---
         trial_dict = trials.loc[i].to_dict()

@@ -47,7 +47,7 @@ class Screens:
 
         self.x = 600 * self.scale_x
         self.y = -40 * self.scale_y
-        self.sz = 30 * self.scale_y 
+        self.sz = 50 * self.scale_y 
         self.choice_sq = 40 * self.scale_x 
         self.cross_thickness = 14 * self.scale_x
         self.rect_thickness= 4
@@ -155,7 +155,7 @@ class Screens:
         rect = visual.Rect(self.win, width=self.rect_w, height=self.rect_h, pos=(0,0), fillColor=None, lineColor=self.BLACK, lineWidth=self.rect_thickness)
         vert = visual.Rect(self.win, width=self.cross_thickness, height=self.cross_arm*2, pos=(0,0), fillColor=self.BLACK, lineColor=None)
         horiz = visual.Rect(self.win, width=self.cross_arm*2, height=self.cross_thickness, pos=(0,0), fillColor=self.BLACK, lineColor=None)
-        txt = visual.TextStim(self.win, text=self.tr('ready'), pos=(0, self.scale_y *200), height=self.sz, color=self.darkgrey)
+        txt = visual.TextStim(self.win, text=self.tr('ready'), pos=(0, self.scale_y * 460), height=self.sz, color=self.darkgrey)
         return [rect, vert, horiz, txt]
 
     def _create_success_buffer(self):
@@ -199,7 +199,7 @@ class Screens:
         return [txt]
 
     def _create_goep_buffer(self):
-        txt = visual.TextStim(self.win, text=self.tr('go'), pos=(0, 140), height=self.sz, color=self.darkgrey)
+        txt = visual.TextStim(self.win, text=self.tr('go'), pos=(0, self.scale_y * 460), height=self.sz, color=self.darkgrey)
         return [txt]
 
     # --------- DYNAMIC BUILDERS (use formatted translations) ---------

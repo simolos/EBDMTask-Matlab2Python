@@ -118,12 +118,12 @@ if __name__ == "__main__":
     cond_er, indx_effort_trials = GetTrialCondition(cfg.nTrials, cfg.nEffortTrials, cfg.population)
 
     # TEST
-    print(cond_er)
-    cond_er[0,0] = 0.95
-    cond_er[0,1] = 1
-    cond_er[1,0] = 0.5
-    cond_er[1,1] = 20
-    print(cond_er)
+    # print(cond_er)
+    # cond_er[0,0] = 0.95
+    # cond_er[0,1] = 5
+    # cond_er[1,0] = 0.5
+    # cond_er[1,1] = 20
+    # print(cond_er)
 
     trials = init_trials(
         n_trials=cfg.nTrials, 
@@ -139,8 +139,8 @@ if __name__ == "__main__":
     # --- Websocket setup ---
     streamer = None
     if cfg.ws_streaming.lower() == "true":
-        # streamer = TrialStreamer("ws://127.0.0.1:8765/trials")
-        streamer = TrialStreamer("ws://192.168.2.200:8765/trials")
+        streamer = TrialStreamer("ws://127.0.0.1:8765/trials")
+        # streamer = TrialStreamer("ws://192.168.2.200:8765/trials")
 
         streamer.start()
 
@@ -161,6 +161,8 @@ if __name__ == "__main__":
     MTF = cfg.MTF
     Hz = win.getActualFrameRate(nIdentical=20, nMaxFrames=200, nWarmUpFrames=10, threshold=1)
     if Hz is None : Hz = 60
+
+    print(dur.Task)
 
     CURSOR, nFrames = init_cursor_matrix(dur.Task, Hz, cfg.nTrials)
     keypr = np.full((nFrames, cfg.nTrials), np.nan, dtype=float)

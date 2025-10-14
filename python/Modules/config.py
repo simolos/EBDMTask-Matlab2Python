@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from datetime import datetime
+import sys
 
 from dataclasses import dataclass
 
@@ -106,13 +107,13 @@ def parse_args(task:Task):
 
         # --- Block name ---
         parser.add_argument(
-            "-b", "--block-id", type=str, required=True,
+            "-b", "--block_id", type=str, required=True,
             help="Block identifier"
         )  
 
         # --- Maximum tapping frequency ---
         parser.add_argument(
-            "-mtf", "--MTF", type=int, required=True,
+            "-mtf", "--MTF", type=float, required=True,
             help="Participant maximum taping frequency"
         )
 
@@ -130,13 +131,15 @@ def parse_args(task:Task):
 
         # --- Block name ---
         parser.add_argument(
-            "-b", "--block-id", type=str, required=True, choices=["MTF_PRE", "MTF_VF"],
+            "-b", "--block_id", type=str, required=True, choices=["MTF_PRE", "MTF_VF"],
             help="Block identifier"
         )  
 
-        args = parser.parse_args()
+        if "-b" in sys.argv:
+            b_index = sys.argv.index("-b") + 1
+            block_choice = sys.argv[b_index]
 
-        if args.block_id == "MTF_PRE":
+        if block_choice == "MTF_PRE":
             # --- Design parameters ---
             parser.add_argument(
                 "-n", "--nTrials", type=int, default=4,
@@ -147,15 +150,21 @@ def parse_args(task:Task):
             help="Number of effort trials in the maximum tapping frequency task w/o visual feedback (typ 4)"
             )
 
-        elif args.block_id == "MTF_VF": 
+        elif block_choice == "MTF_VF":
+            print('sono entrato')
+
             # --- Design parameters ---
             parser.add_argument(
                 "-n", "--nTrials", type=int, default=3,
                 help="Number of trials in the maximum tapping frequency task w visual feedback (typ 3)"
             )     
             parser.add_argument(
-            "-e", "--nEffortTrials", type=int, default=3,
-            help="Number of effort trials in the maximum tapping frequency task w visual feedback (typ 3)"
+                "-e", "--nEffortTrials", type=int, default=3,
+                help="Number of effort trials in the maximum tapping frequency task w visual feedback (typ 3)"
+            )
+            parser.add_argument(
+                "-mtf", "--MTF", type=float, required=True,
+                help="mtf computed in the first step of calibration"
             )
 
 
@@ -245,9 +254,9 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
             dur.DM = 6000
             dur.TimeAfterDMade = 1000
             dur.TimeAfterPositionRight = 1000
-            dur.GetReadyForEP = 1000
+            dur.GetReadyForEP = 2000
             dur.EP_Preparation = [1800, 2200]
-            dur.Task = 8000
+            dur.Task = 6000
             dur.Blank2 = 500
             dur.Feedback = 1000
             dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
