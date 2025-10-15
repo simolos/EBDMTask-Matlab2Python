@@ -136,10 +136,10 @@ if __name__ == "__main__":
 # --- PsychoPy window ---
 mon = monitors.Monitor('MyMonitor')
 if cfg.fullscreen == 'Y':
-    win = visual.Window(monitor=mon, fullscr=True, color=(0.8, 0.8, 0.8), units='pix')
-    gain_screen = 2
+    win = visual.Window(monitor=mon, screen=1, fullscr=True, color=(0.8, 0.8, 0.8), units='pix')
+    gain_screen = 1
 else:
-    win = visual.Window(size=(1280, 720), monitor=mon, fullscr=False, color=(0.8, 0.8, 0.8), units='pix')
+    win = visual.Window(size=(1280, 720), monitor=mon, screen=0, fullscr=False, color=(0.8, 0.8, 0.8), units='pix')
     gain_screen = 1
 
 
@@ -198,6 +198,9 @@ try:
             MTF = max(single_MTF)
         elif Task == Task.MTF and cfg.block_id == 'MTF_VF':
             MTF = np.median(single_MTF)
+
+        print("End of the calibration")
+        print(MTF)
 
         # --- Record enriched trial row (Hz, MTF) ---
         trial_dict = trials.loc[i].to_dict()

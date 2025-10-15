@@ -139,18 +139,18 @@ if __name__ == "__main__":
     # --- Websocket setup ---
     streamer = None
     if cfg.ws_streaming.lower() == "true":
-        streamer = TrialStreamer("ws://127.0.0.1:8765/trials")
-        # streamer = TrialStreamer("ws://192.168.2.200:8765/trials")
+        # streamer = TrialStreamer("ws://127.0.0.1:8765/trials")
+        streamer = TrialStreamer("ws://192.168.2.200:8765/trials")
 
         streamer.start()
 
     # --- PsychoPy window ---
     mon = monitors.Monitor('MyMonitor')
     if cfg.fullscreen == 'Y':
-        win = visual.Window(monitor=mon, fullscr=True, color=(0.8, 0.8, 0.8), units='pix')
-        gain_screen = 2
+        win = visual.Window(monitor=mon, screen=1, fullscr=True, color=(0.8, 0.8, 0.8), units='pix')
+        gain_screen = 1
     else:
-        win = visual.Window(size=(1280, 720), monitor=mon, fullscr=False, color=(0.8, 0.8, 0.8), units='pix')
+        win = visual.Window(size=(1280, 720), monitor=mon, screen=0, fullscr=False, color=(0.8, 0.8, 0.8), units='pix')
         gain_screen = 1
 
     screens = Screens(win, gain_screen=gain_screen, lang=cfg.language)
