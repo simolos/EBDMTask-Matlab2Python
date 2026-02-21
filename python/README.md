@@ -4,21 +4,21 @@
 Open VSC and cd to /EBDMTask-Matlab2Python
 
 Python environment:
-	- Use Python 3.10 or 3.11 for compatibility with PsychoPy 2023.2 --> brew install python@3.11
+	- Use Python 3.11 for compatibility with PsychoPy 2023.2 --> brew install python@3.11
 
 		Check installed version by running in the terminal: python3 --version 
 
   	- Create a virtual environment before installing dependencies:
 
     		Linux / macOS:
-      			python3.11 -m venv venv
-      			source venv/bin/activate
+      			python3.11 -m venv .venv
+      			source .venv/bin/activate
 
 		(if you already have a venv folder in your path, you only need to activate)
 
     		Windows:
-      			python -m venv venv
-      			venv\Scripts\activate
+      			python -m venv .venv
+      			.venv\Scripts\activate
 
 
 	- Upgrade pip, setuptools, and wheel:
@@ -43,7 +43,7 @@ PsychoPy and IOHub:
   - On some systems, IOHub requires extra configuration:
 
     macOS:
-      - Grant Accessibility permissions to PsychoPy in System Preferences (System Settings > Privacy & Security > Accessibility > + > ".../venv/bin/psychopy)
+      - Grant Accessibility permissions to PsychoPy in System Preferences (System Settings > Privacy & Security > Accessibility > + > ".../.venv/bin/psychopy)
 
     Linux:
       - You may need elevated privileges if the OS restricts access to low-level input devices.
@@ -68,7 +68,7 @@ Entry point:
 
 Basic command:
   - Syntax:
-      python main.py -s <SUBJECT_ID> -b <BLOCK_ID> -mtf <MTF>[options...]
+      python python/Modules/main.py -s <SUBJECT_ID> -b <BLOCK_ID> -mtf <MTF>[options...]
 
 Mandatory arguments:
   - -s, --subject-id (str):
