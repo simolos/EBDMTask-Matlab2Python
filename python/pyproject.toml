@@ -1,5 +1,5 @@
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ['py311']
 # Exclude virtual environment from formatting
 exclude = '\.venv|test|__pycache__|build|dist'
