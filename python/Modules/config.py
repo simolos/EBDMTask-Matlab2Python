@@ -4,6 +4,7 @@
 import argparse
 import numpy as np
 import pandas as pd
+from scipy.stats import truncexpon
 from datetime import datetime
 import sys
 
@@ -19,7 +20,11 @@ class Task(Enum):
 class Population(Enum):
     Healthy = "Healthy"
     Old = "Old"
+
+class Expe(Enum):
+    Standard = "Standard"
     DBS = "DBS"
+    MRI = "MRI"
 
 
 @dataclass
@@ -39,7 +44,7 @@ class Duration:
     StartBlock = None
 
 
-def parse_args(task:Task):
+def parse_args(task:Task, expe:Expe):
     """Parse CLI arguments and return a populated argparse.Namespace."""
     parser = argparse.ArgumentParser(description="Experiment configuration for EBDMTask")
 
@@ -59,6 +64,12 @@ def parse_args(task:Task):
     parser.add_argument(
         "-p", "--population", type=Population, choices=list(Population), default="Healthy",
         help=f"Population group {[f'{p.value}' for p in Population]}"
+    )
+
+     # --- Expe ---
+    parser.add_argument(
+        "-ex", "--experiment", type=Expe, choices=list(Expe), default="Standard",
+        help=f"Experiment group {[f'{ex.value}' for ex in Expe]}"
     )
 
     # --- Directory behavioral log
@@ -151,7 +162,6 @@ def parse_args(task:Task):
             )
 
         elif block_choice == "MTF_VF":
-            print('sono entrato')
 
             # --- Design parameters ---
             parser.add_argument(
@@ -241,22 +251,26 @@ TRANSLATIONS = {
 
 
 # get_task_duration.py
-def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> Duration:
+def get_task_duration(flag_eyetracker:int, population:Population, task:Task, expe:Expe) -> Duration:
     """Return a dict of per-phase durations (ms) based on population and eyetracker flag."""
     dur = Duration()
 
-    if population == Population.Healthy:  # I AM FORCING IT TO BE LIKE OLD!!!
+    if population == Population.Healthy:  # Double check timings!
 
         if task == Task.EBDM:
 
-            dur.Blank1 = 2000
+            if expe == Expe.Standard:
+                dur.Blank1 = 2000
+            elif expe == Expe.MRI:
+                dur.Blank1 = [2000, 8000]
+
             dur.DM_Preparation = [1000, 1400]
-            dur.DM = 6000
+            dur.DM = 4000
             dur.TimeAfterDMade = 1000
             dur.TimeAfterPositionRight = 1000
             dur.GetReadyForEP = 2000
             dur.EP_Preparation = [1800, 2200]
-            dur.Task = 6000
+            dur.Task = 8000
             dur.Blank2 = 500
             dur.Feedback = 1000
             dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
@@ -277,10 +291,13 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
 
     elif Population == Population.Old: 
 
-
         if task == Task.EBDM: 
 
-            dur.Blank1 = 2000
+            if expe == Expe.Standard:
+                dur.Blank1 = 2000
+            elif expe == Expe.MRI:
+                dur.Blank1 = [2000, 8000] 
+
             dur.DM_Preparation = [1000, 1400]
             dur.DM = 6000
             dur.TimeAfterDMade = 1000
@@ -294,7 +311,7 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
             dur.FinalFeedback = 4000
             dur.StartBlock = 500
 
-        elif task ==Task.MTF:
+        elif task == Task.MTF:
             dur.Blank1 = 2000
             dur.TimeAfterPositionRight = 1000
             dur.GetReadyForEP = 1000
@@ -304,23 +321,6 @@ def get_task_duration(flag_eyetracker:int, population:Population, task:Task) -> 
             dur.Feedback = 1000
             dur.TimeForPupilBaselineBack = 30000
             dur.StartBlock = 500
-
-
-
-    elif population == Population.DBS:  
-        dur.Blank1 = 2000
-        dur.DM_Preparation = [1000, 1400]
-        dur.DM = 6000
-        dur.TimeAfterDMade = 1000
-        dur.TimeAfterPositionRight = 1000
-        dur.GetReadyForEP = 1000
-        dur.EP_Preparation = [1800, 2200]
-        dur.Task = 6000
-        dur.Blank2 = 500
-        dur.Feedback = 1000
-        dur.TimeForPupilBaselineBack = 2000 if flag_eyetracker == 1 else 2000
-        dur.FinalFeedback = 4000
-        dur.StartBlock = 500
 
     return dur
 
@@ -335,11 +335,29 @@ def get_effort_proposed(population:Population):
 def get_reward_proposed():
     return np.array([1, 5, 10, 20])
 
-def init_trials(n_trials, task:Task, dur_prep_ep, cond_e_r=None, dur_prep_dm=None):
+def init_trials(n_trials, task:Task, expe:Expe, dur=Duration, cond_e_r=None):
     """Create the trial table (pandas.DataFrame) mirroring the Matlab structure."""
 
     if task == Task.EBDM:
+
+        if expe == Expe.Standard:
+            itis = np.repeat(dur.Blank1, n_trials)
+
+        elif expe == Expe.MRI:
+            # Parameters for the truncated exponential distribution
+            gamma = 2 # to ensure mean 2.5 on a truncated exponential (can't just do 1/lambda)
+            a = int(dur.Blank1[0]) / 1000
+            b = int(dur.Blank1[1]) / 1000
+
+            # Generate the distribution and sample n_trials values
+            dist = truncexpon(b = gamma*(b-a), loc = a, scale = 1/gamma)
+            itis = dist.rvs(size = n_trials) * 1000
+
+            # print(itis.mean())   # should be ~2500 (sampling noise)
+            # print(itis.min(), itis.max())  # within [2000, 8000]
+
         trials = pd.DataFrame({
+            "ITI": itis,
             "trial": np.arange(1, n_trials + 1),                       # Trial index
             "effort": cond_e_r[:, 0],                                  # Nominal effort
             "efftested": cond_e_r[:, 0].copy(),                        # Presented effort
@@ -350,13 +368,13 @@ def init_trials(n_trials, task:Task, dur_prep_ep, cond_e_r=None, dur_prep_dm=Non
             "Acceptance": np.full(n_trials, np.nan),                   # 1/0/-1
             "EffortProduction": np.full(n_trials, np.nan),             # 1 if produced
             "durPrep_DM": np.random.randint(                           # Prep DM duration (ms)
-                low=int(dur_prep_dm[0]),
-                high=int(dur_prep_dm[1]) + 1,
+                low=int(dur.DM_Preparation[0]),
+                high=int(dur.DM_Preparation[1]) + 1,  # check this +1 I think it should be removed
                 size=n_trials
             ),
             "durPrep_EP": np.random.randint(                           # Prep EP duration (ms)
-                low=int(dur_prep_ep[0]),
-                high=int(dur_prep_ep[1]) + 1,
+                low=int(dur.EP_Preparation[0]),
+                high=int(dur.EP_Preparation[1]) + 1,  # check this +1 I think it should be removed
                 size=n_trials
             ),
             "success": np.full(n_trials, np.nan),                      # 1/0/-1
@@ -371,8 +389,8 @@ def init_trials(n_trials, task:Task, dur_prep_ep, cond_e_r=None, dur_prep_dm=Non
             "ReactionTimeEP": np.full(n_trials, np.nan),               # Reaction time (EP)
             "EffortProduction": np.full(n_trials, np.nan),             # 1 if produced
             "durPrep_EP": np.random.randint(                           # Prep EP duration (ms)
-                low=int(dur_prep_ep[0]),
-                high=int(dur_prep_ep[1]) + 1,
+                low=int(dur.EP_Preparation[0]),
+                high=int(dur.EP_Preparation[1]) + 1,
                 size=n_trials
             ),
             "Anticipation_EP": np.full(n_trials, np.nan),              # Bool or NaN

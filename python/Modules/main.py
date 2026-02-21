@@ -1,5 +1,5 @@
 # main.py
-# Purpose: Run the full EBDM-like task (decision + effort), handle timing, saving, and websocket streaming.
+# Purpose: Run the full EBDM task (decision-making & effort-production), handle timing, saving, and websocket streaming.
 
 from psychopy import core, visual, monitors
 
@@ -9,7 +9,7 @@ import numpy as np
 import os
 from screens import Screens
 from general_trial import GetTrialCondition
-from config import parse_args, get_task_duration, init_trials, Task, Population
+from config import parse_args, get_task_duration, init_trials, Task, Population, Expe
 from decision import decision_phase
 from effort import effort_phase, init_cursor_matrix
 from ws_utils import trial_row_payload
@@ -19,6 +19,7 @@ import logging
 import traceback
 import tempfile
 import shutil
+import sys
 
 # --- Helper: wait while still catching ESC (polling) ---
 def wait_with_escape(seconds, kb, io):
@@ -100,7 +101,7 @@ def save_and_quit(
 
 if __name__ == "__main__":
     # --- Configuration and sanity checks ---
-    cfg = parse_args(Task.EBDM)
+    cfg = parse_args(Task.EBDM, Expe.Standard)
     logging.basicConfig(level=logging.getLevelName(cfg.log_level))
 
     assert cfg.nTrials > 0, "nTrials must be > 0"
@@ -114,7 +115,7 @@ if __name__ == "__main__":
     flag_MapYesAtRight = (cfg.ChangeMappingYes == 'Y')
 
     # Trials & durations
-    dur = get_task_duration(cfg.eyetracker, cfg.population, Task.EBDM)
+    dur = get_task_duration(cfg.eyetracker, cfg.population, Task.EBDM, cfg.experiment)
     cond_er, indx_effort_trials = GetTrialCondition(cfg.nTrials, cfg.nEffortTrials, cfg.population)
 
     # TEST
@@ -127,10 +128,11 @@ if __name__ == "__main__":
 
     trials = init_trials(
         n_trials=cfg.nTrials, 
-        cond_e_r=cond_er, 
-        dur_prep_dm=dur.DM_Preparation, 
-        dur_prep_ep=dur.EP_Preparation, 
-        task = Task.EBDM)
+        task = Task.EBDM,
+        expe = cfg.experiment,
+        dur=dur,
+        cond_e_r=cond_er
+        )
 
     # --- Data log setup ---
     prefix = f"{cfg.subject_id}_{cfg.block_id}"
@@ -162,8 +164,6 @@ if __name__ == "__main__":
     Hz = win.getActualFrameRate(nIdentical=20, nMaxFrames=200, nWarmUpFrames=10, threshold=1)
     if Hz is None : Hz = 60
 
-    print(dur.Task)
-
     CURSOR, nFrames = init_cursor_matrix(dur.Task, Hz, cfg.nTrials)
     keypr = np.full((nFrames, cfg.nTrials), np.nan, dtype=float)
 
@@ -172,6 +172,8 @@ if __name__ == "__main__":
         elem.draw()
     win.flip()
     wait_with_escape(dur.StartBlock / 1000.0, kb, io)
+
+    TotalGain = None
 
 
     try:
@@ -196,10 +198,11 @@ if __name__ == "__main__":
             if streamer is not None:
                 streamer.send_event(
                 "Intertrial interval sent",
-                {"event_": "ITI", "DurITI": (dur.Blank1 / 1000)} 
+                {"event_": "ITI", "DurITI": (trials.ITI[i] / 1000)} 
                 )
 
-            wait_with_escape(dur.Blank1 / 1000.0, kb, io)
+   
+            wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
 
 
 
@@ -235,7 +238,7 @@ if __name__ == "__main__":
             if streamer is not None:
                 streamer.send_event(
                 "Intertrial interval sent",
-                {"event_": "ITI", "DurITI": (dur.Blank1 / 1000)}
+                {"event_": "ITI", "DurITI": (trials.ITI[i] / 1000)}
                 )
 
             if streamer is not None:
