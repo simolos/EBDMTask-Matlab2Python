@@ -5,6 +5,7 @@ from keyboard import poll_keys, clear_events
 from config import combo, parse_args, Task
 import numpy as np
 from enum import Enum, auto
+import sys
 
 
 
@@ -264,6 +265,7 @@ def effort_production_phase(
                 keypr[f, i] = 0
             else:
                 for ev in events:
+
                     key_name = ev.key if hasattr(ev, 'key') else ev
                     if key_name == tap_key and ev.type == KEY_PRESS:
                         keypr[f, i] = 1
