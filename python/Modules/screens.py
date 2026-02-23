@@ -71,6 +71,7 @@ class Screens:
         # ----- Construction des buffers -----
         self.bBLACK = self._create_black_buffer()
         self.bWHITE = self._create_white_buffer()
+        self.bWaitingMRI = self._create_waiting_MRI_buffer()
         self.bRectCross = self._create_rect_cross_buffer()
         self.bEffortPerceptionEval = self._create_effort_perception_buffer()
         self.bTaskWait = self._create_taskwait_buffer()
@@ -97,6 +98,10 @@ class Screens:
         big_white = visual.Rect(self.win, width=self.screen_w, height=self.screen_h, pos=(0,0), fillColor=[1,1,1], lineColor=None)
         small_black = visual.Rect(self.win, width=200*self.scale_x, height=200*self.scale_y, pos=(0,0), fillColor=self.BLACK, lineColor=None)
         return [big_white, small_black]
+    
+    def _create_waiting_MRI_buffer(self):
+        texte = visual.TextStim(self.win, text='Waiting for MRI trigger', pos=(0, self.screen_h*0.25*0.65), height=self.sz, color=self.darkgrey)
+        return [texte]
 
     def _create_rect_cross_buffer(self):
         vert = visual.Rect(self.win, width=self.cross_thickness, height=self.cross_arm*2, pos=(0,0), fillColor=self.BLACK, lineColor=None)

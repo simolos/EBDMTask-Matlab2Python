@@ -168,10 +168,22 @@ if __name__ == "__main__":
     keypr = np.full((nFrames, cfg.nTrials), np.nan, dtype=float)
 
     # --- Start block (fixation) ---
-    for elem in screens.bRectCross:
-        elem.draw()
-    win.flip()
-    wait_with_escape(dur.StartBlock / 1000.0, kb, io)
+    if cfg.experiment != Expe.MRI:
+
+        print('Entered here')
+        for elem in screens.bRectCross:
+            elem.draw()
+        win.flip()
+        wait_with_escape(dur.StartBlock / 1000.0, kb, io)
+
+    else: # if MRI
+        # Put the task in waiting mode
+
+        for elem in screens.bWaitingMRI:
+            elem.draw()
+        win.flip()
+        wait_with_escape(3000 / 1000.0, kb, io) # temp
+
 
     TotalGain = None
 
@@ -194,16 +206,16 @@ if __name__ == "__main__":
                 elem.draw()
             win.flip()
 
+
             # --- Constant durations to server (small JSON) ---
             if streamer is not None:
                 streamer.send_event(
                 "Intertrial interval sent",
                 {"event_": "ITI", "DurITI": (trials.ITI[i] / 1000)} 
                 )
-
    
-            wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
 
+            wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
 
 
             # --- Decision phase ---
