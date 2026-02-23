@@ -818,7 +818,12 @@ Operational notes:
   - Network issues do not affect client-side timing in PsychoPy; rendering and input polling are local. The client uses fire-and-forget semantics for events and arrays.
 
 --------------------------------------------
-Notes on Improvements
-This codebase is functional and tested, but it can be improved.  
-The current design favors clarity over optimization, and some routines (e.g., frame loops, IOHub handling, WebSocket streaming) could be refactored for efficiency and robustness.  
-Contributions are welcome to extend functionality, improve modularity, or adapt the code to specific experimental setups.  
+General Troubleshooting (to be redistributed if needed)
+
+- ioHub cannot bind its UPD socket: could be that the port is already in use because a previous PsychoPy/ioHub process crashed and left the port occupied
+  FIX: find and kill the process holding the port
+    lsof -nP -iUDP:9036 (9036 is the port commonly used by ioHub)
+      if you get a PID, kill it with: 
+      kill -9 <PID>
+      
+  
