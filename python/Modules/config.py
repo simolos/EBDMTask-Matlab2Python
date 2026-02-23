@@ -195,6 +195,7 @@ def parse_args(task:Task, expe:Expe):
 # --- UI constants ---
 keys_choice = ["left", "right"]  # Selection keys: [left]=Yes, [right]=No
 combo = {"q", "z", "e"}          # Finger position combo (display only)
+MRI_trigger_key = {'5'}
 
 
 # --- Translations dictionary ---

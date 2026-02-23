@@ -9,7 +9,7 @@ import numpy as np
 import os
 from screens import Screens
 from general_trial import GetTrialCondition
-from config import parse_args, get_task_duration, init_trials, Task, Population, Expe
+from config import parse_args, get_task_duration, init_trials, Task, Population, Expe, MRI_trigger_key
 from decision import decision_phase
 from effort import effort_phase, init_cursor_matrix
 from ws_utils import trial_row_payload
@@ -176,13 +176,22 @@ if __name__ == "__main__":
         win.flip()
         wait_with_escape(dur.StartBlock / 1000.0, kb, io)
 
-    else: # if MRI
+    else: # MRI waiting mode
         # Put the task in waiting mode
 
         for elem in screens.bWaitingMRI:
             elem.draw()
+
         win.flip()
-        wait_with_escape(3000 / 1000.0, kb, io) # temp
+
+        while True:
+            _ = kb.getKeys(clear=False)  # refresh kb.state
+            pressed = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
+
+            if pressed == MRI_trigger_key:
+                print('MRI key pressed')
+                break
+
 
 
     TotalGain = None
