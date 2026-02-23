@@ -1,7 +1,7 @@
 # main.py
 # Purpose: Run the full EBDM task (decision-making & effort-production), handle timing, saving, and websocket streaming.
 
-from psychopy import core, visual, monitors
+from psychopy import core, visual, monitors, parallel
 
 from data import DataRecorder
 from dataclasses import asdict
@@ -9,12 +9,13 @@ import numpy as np
 import os
 from screens import Screens
 from general_trial import GetTrialCondition
-from config import parse_args, get_task_duration, init_trials, Task, Population, Expe
+from config import parse_args, get_task_duration, init_trials, Task, Population, Expe, MRI_trigger_key
 from decision import decision_phase
 from effort import effort_phase, init_cursor_matrix
 from ws_utils import trial_row_payload
 from keyboard import init_keyboard, poll_keys, clear_events, QuitSignal
 from ws_stream import TrialStreamer
+from utils import ParallelTrigger
 import logging
 import traceback
 import tempfile
@@ -168,10 +169,35 @@ if __name__ == "__main__":
     keypr = np.full((nFrames, cfg.nTrials), np.nan, dtype=float)
 
     # --- Start block (fixation) ---
-    for elem in screens.bRectCross:
-        elem.draw()
-    win.flip()
-    wait_with_escape(dur.StartBlock / 1000.0, kb, io)
+    if cfg.experiment != Expe.MRI:
+
+        for elem in screens.bRectCross:
+            elem.draw()
+        win.flip()
+        wait_with_escape(dur.StartBlock / 1000.0, kb, io)
+
+    else: # MRI waiting mode
+        # Put the task in waiting mode
+
+        for elem in screens.bWaitingMRI:
+            elem.draw()
+
+        win.flip()
+
+        while True:
+            _ = kb.getKeys(clear=False)  # refresh kb.state
+            pressed = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
+
+            if pressed == MRI_trigger_key:
+                print('MRI key pressed')
+
+                # If the MRI_trigger_key was detected, send out TI trigger (TTL pulse through the parallel port)
+                TItrig = ParallelTrigger(address=0x7FF0)
+                TItrig.send(1)
+
+                break
+
+
 
     TotalGain = None
 
@@ -194,16 +220,16 @@ if __name__ == "__main__":
                 elem.draw()
             win.flip()
 
+
             # --- Constant durations to server (small JSON) ---
             if streamer is not None:
                 streamer.send_event(
                 "Intertrial interval sent",
                 {"event_": "ITI", "DurITI": (trials.ITI[i] / 1000)} 
                 )
-
    
-            wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
 
+            wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
 
 
             # --- Decision phase ---
