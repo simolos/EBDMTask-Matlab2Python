@@ -48,10 +48,10 @@ def hand_positioning_phase(
     ##### Select screen and required keys to be held
     if flag_MultipleKeyPressed == 1:
         draw_buffer = screens.bPosition_fingers_1
-        required_keys = AWE_KEYS
+        REQUIRED_KEYS = AWE_KEYS
     else:
         draw_buffer = screens.bPosition_finger_2
-        required_keys = CTRL_KEY
+        REQUIRED_KEYS = CTRL_KEY
 
     ##################################################################################################
     # 1) Show hand positioning screen
@@ -73,7 +73,7 @@ def hand_positioning_phase(
         current_time = core.getTime()
         held_keys = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
 
-        if held_keys == required_keys:
+        if held_keys == REQUIRED_KEYS:
 
             if hold_start_time is None:
                 hold_start_time = current_time
@@ -95,58 +95,54 @@ def get_ready_phase(
     flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg, dur
 ):
     """
-    Display 'Get ready' and detect anticipation within the per-trial EP jitter.
-    Reads trials.loc[i,'durPrep_EP'] (ms) and writes trials.at[i,'Anticipation_EP'].
-    Anticipation logic:
-      - mode 2: anticipation on KEY_RELEASE of active key
-      - else:   anticipation on KEY_PRESS of active key
+    STEPS:
+    1) Show get_ready screen
+    2) Detect anticipation events within dur_prep_EP
+
+    LOGIC:
+    - If hold CTRL mode --> anticipation if key released
+    - If hold AWE mode --> anticipation if key pressed
     """
 
-    print("Entered get_ready_phase")
-
-    TaskTimings.append((expClock.getTime(), f"T{i} Get ready"))
+    ##################################################################################################
+    # 1) Show get_ready screen
+    ##################################################################################################
+  
     for elem in screens.bGetReadyForEP:
         elem.draw()
     win.flip()
 
-    prepEPClock = core.Clock()
+
+    preparationClock = core.Clock()
     TaskTimings.append((expClock.getTime(), f"T{i} Prep EP"))
 
     clear_events(kb, io)  # drop any buffered events
-    activeKey = 'f' if flag_MultipleKeyPressed == 1 else 'lctrl'
+    active_key = 'f' if flag_MultipleKeyPressed == 1 else 'lctrl'
+    anticipation_event = KEY_RELEASE if flag_MultipleKeyPressed == 2 else KEY_PRESS
     trials.at[i, 'Anticipation_EP'] = 0
 
-    dur_prep_ms = int(trials.loc[i].get('durPrep_EP', 1000))
+    dur_prep_EP = int(trials.loc[i].get('durPrep_EP', 1000))
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
         "Preparation EP start",
-        {"event_": "PrepEP", "dur_Prep_EP": round((dur_prep_ms / 1000),2)} 
+        {"event_": "PrepEP", "dur_Prep_EP": round((dur_prep_EP / 1000),2)} 
         ) 
         
 
-    while prepEPClock.getTime() < (dur_prep_ms / 1000.0):
+    while preparationClock.getTime() < (dur_prep_EP / 1000.0):
         events = poll_keys(kb, io)  # also catches ESC
         if events:
             for ev in events:
                 key_name = ev.key if hasattr(ev, 'key') else ev
-                if flag_MultipleKeyPressed == 2:
-                    if key_name == activeKey and ev.type == KEY_RELEASE:
-                        trials.at[i, 'Anticipation_EP'] = 1
-                        # if cfg.ws_streaming.lower() == "true":
-                        #     streamer.send_event(
-                        #     "Preparation to the EPFeedback phase",
-                        #     {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
-                        #     )
-                        break
-                else:
-                    if key_name == activeKey and ev.type == KEY_PRESS:
-                        trials.at[i, 'Anticipation_EP'] = 1
-                        # if cfg.ws_streaming.lower() == "true":
-                        #     streamer.send_event(
-                        #     "Preparation to the EPFeedback phase",
-                        #     {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
-                        #     )                        
-                        break
+                if key_name == active_key and ev.type == anticipation_event:
+                    trials.at[i, 'Anticipation_EP'] = 1
+                    # if cfg.ws_streaming.lower() == "true":
+                    #     streamer.send_event(
+                    #     "Preparation to the EPFeedback phase",
+                    #     {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
+                    #     )
+                    break
+                
         core.wait(0.001)
 
 
