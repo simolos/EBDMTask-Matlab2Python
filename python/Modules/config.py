@@ -341,7 +341,7 @@ def init_trials(n_trials, task:Task, expe:Expe, dur=Duration, cond_e_r=None):
 
     if task == Task.EBDM:
 
-        if expe == Expe.Standard:
+        if expe == Expe.Standard or expe == Expe.DBS:
             itis = np.repeat(dur.Blank1, n_trials)
 
         elif expe == Expe.MRI:

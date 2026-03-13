@@ -6,6 +6,7 @@ from config import combo, parse_args, Task
 import numpy as np
 from enum import Enum, auto
 import sys
+from trigger_and_logs_manager import TriggerCodes
 
 
 
@@ -156,7 +157,7 @@ def get_ready_phase(
 
 def effort_production_phase(
     streamer, keys, i, win, screens, kb, io, expClock,
-    dur, MTF, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg, task
+    dur, MTF, Hz, trials, CURSOR, triggers, keypr, flag_MultipleKeyPressed, cfg, task
 ):
     """
     EP frame loop:

@@ -2,8 +2,9 @@ from psychopy import core
 from keyboard import poll_keys, clear_events
 from config import keys_choice, parse_args, get_reward_proposed
 import numpy as np
+from trigger_and_logs_manager import TriggerCodes
 
-def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight, cfg):
+def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, triggers, flag_MapYesAtRight, cfg):
     """
     Decision phase with strict post-response display:
     - Response must occur before DM_S (decision window).
@@ -37,6 +38,9 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
         elem.draw()
     win.flip()
 
+    if triggers is not None:  
+        triggers.send(TriggerCodes.PREP_DM)
+
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
             "Preparation DM start",
@@ -51,10 +55,10 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
                 key_name = ev.key if hasattr(ev, 'key') else ev
                 if key_name in keys_choice:
                     trials.at[i, 'Anticipation_DM'] = 1
-                    TaskTimings.append((expClock.getTime(), f"T{i} Anticipation DM"))
+                    #TaskTimings.append((expClock.getTime(), f"T{i} Anticipation DM"))
                     break
         core.wait(0.001)
-    TaskTimings.append((expClock.getTime(), f"T{i} Prep DM"))
+    #TaskTimings.append((expClock.getTime(), f"T{i} Prep DM"))
 
     # --- 3) Decision making window ---
     clear_events(kb, io)
@@ -94,7 +98,7 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
 
         # Send "Start DM" once right after first flip
         if not start_trigger_sent:
-            TaskTimings.append((expClock.getTime(), f"T{i} Start DM"))
+            #TaskTimings.append((expClock.getTime(), f"T{i} Start DM"))
             if cfg.ws_streaming.lower() == "true":
                 allRewards = get_reward_proposed()
                 currentReward = float(row['reward'])
@@ -131,7 +135,7 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, Tas
 
                         decision_made = True
                         t_resp = now  # seconds since DM start
-                        TaskTimings.append((expClock.getTime(), f"T{i} Decided {'Yes' if resp==1 else 'No'}"))
+                        #TaskTimings.append((expClock.getTime(), f"T{i} Decided {'Yes' if resp==1 else 'No'}"))
                         if cfg.ws_streaming.lower() == "true":
                             streamer.send_event(
                             "Decision Feedback",
