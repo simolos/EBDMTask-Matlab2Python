@@ -6,6 +6,7 @@ import time
 import sys
 from enum import IntEnum
 import pandas as pd
+from config import Expe
 
 try:
     import serial
@@ -26,7 +27,11 @@ class TriggerCodes(IntEnum):
 class TriggerManager:
     """
     Asynchronous trigger manager for parallel (MRI, TMSroom) or serial (Arduino) port.
-    Supports full time logging:
+    It 1) sends triggers to hardware (if enabled=True); 2) record timing (always)
+
+    Logic: the main task puts a trigger request in queue through the send method, then the worker thread reads the queue, sends the trigger and logs the time
+
+    Time logging:
      - requested_time = when the main behavioral task requested the trigger
      - start_time = when the worker thread started handling the trigger 
      - end_time = when the trigger command finished (sending to the hardware, not executing by the hardware!!!)
@@ -57,6 +62,11 @@ class TriggerManager:
         self.queue.put((code, width, requested_time))
 
     def _worker(self):
+
+        """
+        The worker thread runs forever, getting the triggers from the queue as soon as they arrive.
+        When the trigger is received, it sends the hardware pulse out and it logs the time.
+        """
         while self.running:
             code, width, requested_time = self.queue.get()
             if code is None:
@@ -77,7 +87,7 @@ class TriggerManager:
                         self.port.setData(code)
                         core.wait(width)
                         self.port.setData(0)
-                    elif self.mode == "arduino" and self.serial is not None:
+                    elif self.mode == "DBS" and self.serial is not None:
                         self.serial.write(bytes([code]))
                         # Optionally: could wait for ACK here for exact end_time
                 except Exception as e:
@@ -100,7 +110,7 @@ class TriggerManager:
         self.running = False
         self.queue.put((None, None, None))
         self.thread.join()
-        if self.mode == "arduino" and self.serial is not None and self.enabled:
+        if self.mode == "DBS" and self.serial is not None and self.enabled:
             try:
                 self.serial.close()
             except Exception as e:
@@ -128,15 +138,15 @@ def init_triggers(cfg):
 
     """
     # MRI: parallel port triggers
-    if cfg.experiment == "MRI":
+    if cfg.experiment == Expe.MRI:
         if sys.platform == 'darwin':
             print("macOS: parallel port unavailable --> log-only)")
-            return TriggerManager(mode="log_only", simulate_hadware=False)
+            return TriggerManager(mode="log_only", enabled=False)
         port = parallel.ParallelPort(address=0x7FF0)
         return TriggerManager(mode="parallel", port=port, pulse_width=0.005)
 
     # Arduino setup
-    elif cfg.experiment == "DBS":
+    elif cfg.experiment == Expe.DBS:
         try:
             # Attempt to open the Arduino port
             ser = serial.Serial('/dev/ttyACM0', 115200)

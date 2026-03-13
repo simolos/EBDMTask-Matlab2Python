@@ -200,11 +200,6 @@ if __name__ == "__main__":
     try:
         for i in range(cfg.nTrials):
         
-            # --- Inter-trial cross ---
-            for elem in screens.bRectCross:
-                elem.draw()
-            win.flip()
-
 
             # --- Constant durations to server (small JSON) ---
             # if streamer is not None:
@@ -216,6 +211,7 @@ if __name__ == "__main__":
 
             # --- Decision phase ---
             decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, triggers, flag_MapYesAtRight, cfg)
+
 
             # --- Effort phase (only when scheduled and accepted) ---
             if i in indx_effort_trials and trials.loc[i, 'Acceptance'] == 1:
@@ -254,6 +250,9 @@ if __name__ == "__main__":
                 )
 
             # Intertrial interval 
+            for elem in screens.bRectCross:
+                elem.draw()
+            win.flip()
             wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
 
                 
