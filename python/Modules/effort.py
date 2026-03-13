@@ -2,11 +2,11 @@
 # Purpose: Effort phase subroutines (positioning, get-ready, EP frames, feedback).
 from psychopy import core
 from keyboard import poll_keys, clear_events
-from config import combo, parse_args, Task
+from config import AWE_KEYS, CTRL_KEY, parse_args, Task
 import numpy as np
 from enum import Enum, auto
 import sys
-from trigger_and_logs_manager import TriggerCodes
+
 
 
 
@@ -37,60 +37,55 @@ def hand_positioning_phase(
     flag_MultipleKeyPressed, cfg, io=None, 
 ):
     """
-    Show the finger-positioning buffer and wait until the required combo is held
-    continuously for dur['TimeAfterPositionRight'] ms.
-    Writes trials.at[i,'KeyPositionTime'] (time until first correct pose).
+    STEPS:
+    1) Show hand positioning screen
+    2) Detect when the required keys are pressed and wait that the keys are held for DUR_HOLD_REQUIRED
     """
 
-    # --- Configuration
-    # cfg = parse_args("main")
+    ##### Convert trial durations to seconds
+    DUR_HOLD_REQUIRED    = int(dur.TimeAfterPositionRight) / 1000.0
 
+    ##### Select screen and required keys to be held
     if flag_MultipleKeyPressed == 1:
-        for elem in screens.bPosition_fingers_1:
-            elem.draw()
+        draw_buffer = screens.bPosition_fingers_1
+        required_keys = AWE_KEYS
     else:
-        for elem in screens.bPosition_finger_2:
-            elem.draw()
+        draw_buffer = screens.bPosition_finger_2
+        required_keys = CTRL_KEY
+
+    ##################################################################################################
+    # 1) Show hand positioning screen
+    ##################################################################################################
+    
+    for elem in draw_buffer:
+        elem.draw()        
     win.flip()
 
-    t0 = core.getTime()
-    trials.at[i, 'KeyPositionTime'] = np.nan
-    held_since = None
+    ##################################################################################################
+    # 2) Detect when the required keys are pressed and wait that the keys are held for DUR_HOLD_REQUIRED
+    ##################################################################################################
+
+    start_time = core.getTime()
+    hold_start_time = None
 
     while True:
-        # Always poll to catch ESC through poll_keys
-        _ = poll_keys(kb, io)
-        tnow = core.getTime()
-        held = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
+        _ = poll_keys(kb, io) # Allow ESC detection
+        current_time = core.getTime()
+        held_keys = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
 
-        if flag_MultipleKeyPressed == 1:
-            if held == combo:
-                if held_since is None:
-                    held_since = tnow
-                    trials.at[i, 'KeyPositionTime'] = tnow - t0
-                elif (tnow - held_since) > (dur.TimeAfterPositionRight / 1000.0):
-                    TaskTimings.append((expClock.getTime(), f"T{i} Hand in Position"))
-                    if cfg.ws_streaming.lower() == "true":
-                        streamer.send_event("hand positionning time", {"trial": i + 1, "t": expClock.getTime()})
-                    break
-            else:
-                held_since = None
-                trials.at[i, 'KeyPositionTime'] = np.nan
+        if held_keys == required_keys:
 
-        elif flag_MultipleKeyPressed == 2:
-            tap_key = {'lctrl'}
-            if held == tap_key:
-                if held_since is None:
-                    held_since = tnow
-                    trials.at[i, 'KeyPositionTime'] = tnow - t0
-                elif (tnow - held_since) > (dur.TimeAfterPositionRight / 1000.0):
-                    TaskTimings.append((expClock.getTime(), f"T{i} Hand in Position"))
-                    if cfg.ws_streaming.lower() == "true":
-                        streamer.send_event("hand positionning time", {"trial": i + 1, "t": expClock.getTime()})
-                    break
-            else:
-                held_since = None
-                trials.at[i, 'KeyPositionTime'] = np.nan
+            if hold_start_time is None:
+                hold_start_time = current_time
+                trials.at[i, 'KeyPositionTime'] = current_time - start_time
+
+            elif (current_time - hold_start_time) > DUR_HOLD_REQUIRED:
+
+                if cfg.ws_streaming.lower() == "true":
+                    streamer.send_event("hand positionning time", {"trial": i + 1, "t": expClock.getTime()})
+                break
+        else:
+            hold_start_time = None
 
         core.wait(0.001)  # tiny sleep to avoid busy spin
 
