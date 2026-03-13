@@ -30,6 +30,53 @@ def all_keys_pressed(kb, win=None):
     held = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
     return held
 
+def compute_cursor_position(mean_onsets, effort, Hz, MTF, ws_streaming):
+
+    if Task == Task.EBDM:
+        if ws_streaming:
+            offset = 1 - effort
+            cursor = ((mean_onsets * Hz) / MTF) / effort
+            cursor = (cursor - offset) * (1 + offset)
+        else:
+            cursor_position = (((mean_onsets * Hz) / MTF) - 0.3) / 0.7
+
+        return max(0, min(cursor, 1))    
+    elif Task == Task.MTF:
+            cursor_position = (((mean_onsets * Hz) / MTF) - 0.3) / 1.4 
+
+
+def detect_tap(events, tap_key):
+
+    for ev in events:
+        key_name = ev.key if hasattr(ev, "key") else ev
+
+        if key_name == tap_key and ev.type == KEY_PRESS:
+            return True
+
+    return False
+
+
+def draw_ep_frame(task, screens, reward_val, target_effort, cfg):
+    
+    def draw_buffer(buffer):
+        for elem in buffer:
+            elem.draw()
+
+    if task == Task.EBDM:
+        draw_buffer(screens.bTaskWait)
+        draw_buffer(screens._create_reward_buffer(reward_val, target_effort))
+        draw_buffer(screens._create_bar_buffer(target_effort))
+
+    elif task == Task.MTF and cfg.block_id == "MTF_PRE":
+        draw_buffer(screens.bTaskWaitCross)
+
+    elif task == Task.MTF and cfg.block_id == "MTF_VF":
+        draw_buffer(screens.bTaskWait)
+        draw_buffer(screens._create_bar_buffer(target_effort))
+
+    draw_buffer(screens.bGoEP)
+
+
 
 # ---------- phases ----------
 def hand_positioning_phase(
@@ -151,18 +198,21 @@ def effort_production_phase(
     dur, MTF, Hz, trials, CURSOR, triggers, keypr, flag_MultipleKeyPressed, cfg, task
 ):
     """
-    EP frame loop:
+    LOGIC:
+    1) Poll keys and detect tap
+    2) 
+
       - On each frame, set keypr[f,i]=1 if tap onset is detected, else 0.
       - First onset defines ReactionTimeEP.
       - Compute normalized cursor from mean onset rate.
       - Draw EP layers and flip at Hz pace until nFrames.
     """
 
+    ws_streaming = cfg.ws_streaming.lower() == "true"
+    tap_key = 'f' if flag_MultipleKeyPressed == 1 else 'lctrl'
 
-    # --- Configuration
-    # cfg = parse_args("main")
-
-    # Initial 'Go' frame (time zero)
+    effort = float(trials.loc[i, "effort"])
+    reward = float(trials.loc[i, "reward"])
         
     for elem in screens.bTaskWait:
         elem.draw()
@@ -186,7 +236,7 @@ def effort_production_phase(
     win.flip()
 
     EPClock = core.Clock()
-    TaskTimings.append((expClock.getTime(), f"T{i} Start EP"))
+
     # if cfg.ws_streaming.lower() == "true":
     #     opening_percentage = target_effort - factor_compensating_for_leonardosbug # -0.05 to compensate Leonardo's bug
     #     streamer.send_event(
@@ -206,30 +256,11 @@ def effort_production_phase(
     # Frame loop
     f = 0
     while f < nFrames:
-        frame_t0 = EPClock.getTime()
 
+        frame_start = EPClock.getTime()
 
         # Draw static layers
-        if task==Task.EBDM:
-            for elem in screens.bTaskWait:
-                elem.draw()
-            for elem in screens._create_reward_buffer(reward_val, target_effort):
-                elem.draw()
-            for elem in screens._create_bar_buffer(target_effort):
-                elem.draw()
-        elif task==Task.MTF and cfg.block_id == "MTF_PRE":
-            for elem in screens.bTaskWaitCross:
-                elem.draw()
-        elif task==Task.MTF and cfg.block_id == "MTF_VF":
-            for elem in screens.bTaskWait:
-                elem.draw()
-            for elem in screens._create_bar_buffer(target_effort):
-                elem.draw()
-
-        for elem in screens.bGoEP:
-            elem.draw()
-
-
+        draw_ep_frame(task, screens, reward_val, target_effort, cfg)
 
         # Onset detection per mode
         if flag_MultipleKeyPressed == 1:
@@ -238,11 +269,13 @@ def effort_production_phase(
                 keypr[f, i] = 0
             else:
                 for ev in events:
-                    key_name = ev.key if hasattr(ev, 'key') else ev
-                    if key_name == tap_key and ev.type == KEY_PRESS:
+
+                    tap_happened = detect_tap(events, tap_key)
+
+                    if tap_happened:
                         keys = all_keys_pressed(kb, win)
                         # Accept if combo is held, with or without the tap key co-held
-                        if keys == (combo | {tap_key}) or keys == combo:
+                        if keys == (AWE_KEYS | {tap_key}) or keys == AWE_KEYS:
                             keypr[f, i] = 1
                             if not started:
                                 trials.at[i, 'ReactionTimeEP'] = EPClock.getTime() - t0
@@ -258,8 +291,9 @@ def effort_production_phase(
             else:
                 for ev in events:
 
-                    key_name = ev.key if hasattr(ev, 'key') else ev
-                    if key_name == tap_key and ev.type == KEY_PRESS:
+                    tap_happened = detect_tap(events, tap_key)
+
+                    if tap_happened:
                         keypr[f, i] = 1
                         if not started:
                             trials.at[i, 'ReactionTimeEP'] = EPClock.getTime() - t0
@@ -268,30 +302,16 @@ def effort_production_phase(
                         keypr[f, i] = 0
 
         # Cursor from mean onset rate
-        if task==Task.EBDM:
+        if task == Task.EBDM:
             mean_onsets = np.mean(keypr[: f + 1, i]) if f >= 0 else 0.0
-            if cfg.ws_streaming.lower() == "true": # If streaming to VR, different effort rescaling!
-                e = float(trials.loc[i, 'effort'])
-                offset = 1-e # shit by Leonardo
-                cursor_pos = ((mean_onsets * Hz) / MTF) / e
-                cursor_pos = (cursor_pos - offset) * (1 + offset)
                 
-                if cursor_pos < 0:
-                    cursor_pos = 0
-                elif cursor_pos > 1:
-                    cursor_pos = 1
-            else:
-                cursor_pos = (((mean_onsets * Hz) / MTF) - 0.3) / 0.7
-                if cursor_pos < 0:
-                    cursor_pos = 0
-                elif cursor_pos > 1:
-                    cursor_pos = 1
+            cursor_position = compute_cursor_position(mean_onsets, effort, Hz, MTF, ws_streaming, Task)           
 
-            CURSOR[f, i] = cursor_pos
+            CURSOR[f, i] = cursor_position
             if cfg.ws_streaming.lower() == "true":
                 streamer.send_event(
                     "EP phase",
-                    {"event_": "EPphase", "dur_EPphase": 6, "cursor_pos": round(cursor_pos, 2)} # -0.05 to compensate for Leonardo's bug
+                    {"event_": "EPphase", "dur_EPphase": 6, "cursor_pos": round(cursor_position, 2)} # -0.05 to compensate for Leonardo's bug
                     )
 
             # Dynamic cursor
@@ -301,12 +321,8 @@ def effort_production_phase(
         elif task==Task.MTF and cfg.block_id == 'MTF_VF':
             mean_onsets = np.mean(keypr[: f + 1, i]) if f >= 0 else 0.0
 
-            cursor_pos = (((mean_onsets * Hz) / cfg.MTF) - 0.3) / 1.4 
-            if cursor_pos < 0:
-                cursor_pos = 0
-            elif cursor_pos > 1:
-                cursor_pos = 1
-            CURSOR[f, i] = cursor_pos
+
+            CURSOR[f, i] = cursor_position
 
             # Dynamic cursor
             for elem in screens._create_cursor_dynamic_buffer(CURSOR[f, i]):
@@ -316,7 +332,7 @@ def effort_production_phase(
 
         f += 1
         # Pace to Hz
-        elapsed = EPClock.getTime() - frame_t0
+        elapsed = EPClock.getTime() - frame_start
         remain = oneframe - elapsed
         if remain > 0:
             core.wait(remain)

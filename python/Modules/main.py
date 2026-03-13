@@ -228,7 +228,7 @@ if __name__ == "__main__":
                     Hz=Hz,
                     trials=trials,
                     CURSOR=CURSOR,
-                    triggers = triggers,
+                    TaskTimings=TaskTimings,
                     keypr=keypr,
                     cfg=cfg,  # <-- explicitly pass cfg here
                     task = Task.EBDM,
@@ -260,7 +260,6 @@ if __name__ == "__main__":
             # --- Record enriched trial row (Hz, MTF) ---
             trial_dict = trials.loc[i].to_dict()
             trial_dict.update({"Hz": Hz, "MTF": MTF, "mode": cfg.mode})
-            print("before potential error")
             trial_dict.update({f"dur_{k}": v for k, v in asdict(dur).items()})
             rec.add_trial(trial_dict)
 

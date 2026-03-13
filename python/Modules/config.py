@@ -194,7 +194,8 @@ def parse_args(task:Task, expe:Expe):
 
 # --- UI constants ---
 keys_choice = ["left", "right"]  # Selection keys: [left]=Yes, [right]=No
-combo = {"q", "z", "e"}          # Finger position combo (display only)
+AWE_KEYS = {"q", "z", "e"}          # Finger position combo (display only)
+CTRL_KEY = {'lctrl'}
 MRI_trigger_key = {'5'}
 
 
@@ -210,7 +211,7 @@ TRANSLATIONS = {
         "no_effort": "Pas d'effort",
         "max_effort": "Effort maximum",
         "press": "Pressez",
-        "fingers": "-".join(sorted(combo)).upper(),
+        "fingers": "-".join(sorted(AWE_KEYS)).upper(),
         "failed_try": "Raté ! Veuillez essayer à nouveau",
         "anticip": "Anticipé !",
         "rest": "Repos",
@@ -234,7 +235,7 @@ TRANSLATIONS = {
         "no_effort": "No effort at all",
         "max_effort": "Maximum effort",
         "press": "Press",
-        "fingers": "-".join(sorted(combo)).upper(),
+        "fingers": "-".join(sorted(AWE_KEYS)).upper(),
         "failed_try": "Failure! Please repeat the trial",
         "anticip": "Anticipated",
         "rest": "Rest",
