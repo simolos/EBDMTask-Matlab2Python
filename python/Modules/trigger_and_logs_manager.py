@@ -21,8 +21,14 @@ class TriggerCodes(IntEnum):
     PREP_DM = 2
     START_DM = 3   # Offer appears on screen
     DECISION_MADE = 4       # Decision onset
-    PREP_EP = 5
-    START_EP = 6
+
+    REQUIRED_HAND_POSITION = 5
+    PREP_EP = 6
+    START_EP = 7
+    WAITING_FEEDBACK_EP = 8
+    FEEDBACK_ANTICIPATION = 9
+    FEEDBACK_EP = 10
+    ITI = 11
   
 
 # --- TriggerManager class ---
@@ -100,6 +106,7 @@ class TriggerManager:
             # Log times relative to first trigger
             self.trigger_log.append({
                 "code": code,
+                "code_name": TriggerCodes(code).name,
                 "requested_time": relative_requested,
                 "start_time": relative_start,
                 "end_time": end_time
@@ -121,7 +128,7 @@ class TriggerManager:
     def get_log_dataframe(self):
         """Return the trigger log as a pandas DataFrame."""
         if not self.trigger_log:
-            return pd.DataFrame(columns=["code", "requested_time", "start_time", "end_time"])
+            return pd.DataFrame(columns=["code", "code_name", "requested_time", "start_time", "end_time"])
         return pd.DataFrame(self.trigger_log)
 
     @property

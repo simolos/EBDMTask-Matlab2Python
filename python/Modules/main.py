@@ -147,6 +147,10 @@ if __name__ == "__main__":
 
         streamer.start()
 
+
+    # Triggers initialization (HERE I WILL NEED TO DEFINE WHICH TRIGGERS ARE SENT!! EYELINK, MRI, WEBSOCKET, ETC.)
+    triggers = init_triggers(cfg)
+
     # --- PsychoPy window ---
     mon = monitors.Monitor('MyMonitor')
     if cfg.fullscreen == 'Y':
@@ -168,8 +172,6 @@ if __name__ == "__main__":
     CURSOR, nFrames = init_cursor_matrix(dur.Task, Hz, cfg.nTrials)
     keypr = np.full((nFrames, cfg.nTrials), np.nan, dtype=float)
 
-    # Triggers initialization (HERE I WILL NEED TO DEFINE WHICH TRIGGERS ARE SENT!! EYELINK, MRI, WEBSOCKET, ETC.)
-    triggers = init_triggers(cfg)
 
     # Waiting for start (either MRI trigger or manual start, keypress 5)
     for elem in screens.bWaitingStart:
@@ -215,6 +217,7 @@ if __name__ == "__main__":
 
             # --- Effort phase (only when scheduled and accepted) ---
             if i in indx_effort_trials and trials.loc[i, 'Acceptance'] == 1:
+                print("Entered EP phase")
                 effort_phase(
                     streamer=streamer,
                     i=i,
@@ -258,12 +261,22 @@ if __name__ == "__main__":
                 for elem in screens.bRectCross:
                     elem.draw()
                 win.flip()
+
+                ##### Send out triggers
+                if triggers is not None:  
+                    triggers.send(TriggerCodes.ITI)
+
                 wait_with_escape((trials.ITI[i]+dur.TimeForPupilBaselineBack) / 1000.0, kb, io)
 
             else:
                 for elem in screens.bRectCross:
                     elem.draw()
                 win.flip()
+
+                ##### Send out triggers
+                if triggers is not None:  
+                    triggers.send(TriggerCodes.ITI)
+
                 wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
                 
 

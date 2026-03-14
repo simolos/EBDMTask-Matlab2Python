@@ -73,7 +73,7 @@ def draw_ep_frame(task, screens, reward_val, target_effort, cfg):
 
 # ---------- phases ----------
 def hand_positioning_phase(
-    streamer, i, win, screens, kb, expClock, dur, trials, TaskTimings,
+    streamer, i, win, screens, kb, expClock, dur, trials, TaskTimings, triggers,
     flag_MultipleKeyPressed, cfg, io=None, 
 ):
     """
@@ -100,6 +100,10 @@ def hand_positioning_phase(
     for elem in draw_buffer:
         elem.draw()        
     win.flip()
+
+    ##### Send out triggers
+    if triggers is not None:  
+        triggers.send(TriggerCodes.REQUIRED_HAND_POSITION)
 
     ##################################################################################################
     # 2) Detect when the required keys are pressed and wait that the keys are held for DUR_HOLD_REQUIRED
@@ -346,11 +350,13 @@ def waiting_for_feedback_phase(streamer, win, screens, dur, expClock, TaskTiming
     for elem in screens.bTaskWaitCross:
         elem.draw()
     win.flip()
-    core.wait(dur.Blank2 / 1000.0)
 
     ##### Send out triggers
     if triggers is not None:  
         triggers.send(TriggerCodes.WAITING_FEEDBACK_EP)
+
+    core.wait(dur.Blank2 / 1000.0)
+
 
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
@@ -359,7 +365,7 @@ def waiting_for_feedback_phase(streamer, win, screens, dur, expClock, TaskTiming
             )
 
 
-def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, task=Task, MTF=None, Hz=None):
+def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, triggers, expClock, dur, cfg, task=Task, MTF=None, Hz=None):
     """
     Feedback based on mean onset frequency:
       success if (mean(keypr)*Hz)/MTF >= eff_t
@@ -367,16 +373,21 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
     """
     
     if trials.loc[i, 'Anticipation_EP'] == 1:
+        print("ANTICIPATION!")
         trials.at[i, 'success'] = -1
         for elem in screens.bAnticip:
             elem.draw()
-        TaskTimings.append((expClock.getTime(), f"T{i} FeedbackAnticip"))
-        if cfg.ws_streaming.lower() == "true":
-            streamer.send_event(
-            "EPFeedback",
-            {"event_": "EPFeedback", "EPFeedback": int(trials.at[i, 'success']), "dur_EPFeedback": dur.Feedback / 1000}
-            )
+        # if cfg.ws_streaming.lower() == "true":
+        #     streamer.send_event(
+        #     "EPFeedback",
+        #     {"event_": "EPFeedback", "EPFeedback": int(trials.at[i, 'success']), "dur_EPFeedback": dur.Feedback / 1000}
+        #     )
         win.flip()
+
+        ##### Send out triggers
+        if triggers is not None:  
+            triggers.send(TriggerCodes.FEEDBACK_EP)
+
         core.wait(dur.Feedback / 1000.0)
         return
     
@@ -404,6 +415,11 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
         
 
         win.flip()
+
+        ##### Send out triggers
+        if triggers is not None:  
+            triggers.send(TriggerCodes.FEEDBACK_EP)
+
         core.wait(dur.Feedback / 1000.0)
 
 
@@ -427,7 +443,7 @@ def effort_phase(
     if flag_MultipleKeyPressed != 0:
         hand_positioning_phase(
             streamer, i, win, screens, kb, expClock, dur, trials, TaskTimings,
-            flag_MultipleKeyPressed, cfg, io=io
+            flag_MultipleKeyPressed, cfg, io=io,
         )
 
     get_ready_phase(
@@ -441,9 +457,9 @@ def effort_phase(
             dur, MTF, Hz, trials, CURSOR, triggers, keypr, flag_MultipleKeyPressed, cfg, task
         )
 
-    waiting_for_feedback_phase, triggers)
+    waiting_for_feedback_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg, triggers)
     
-    feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, task, MTF=MTF, Hz=Hz)       
+    feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, triggers, expClock, dur, cfg, task, MTF=MTF, Hz=Hz)       
 
     if trials.loc[i, 'Anticipation_EP'] == 1 and task == Task.MTF:
         if not getattr(effort_phase, "_repeated", False):
