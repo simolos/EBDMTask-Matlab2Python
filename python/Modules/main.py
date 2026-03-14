@@ -21,83 +21,8 @@ import tempfile
 import shutil
 import sys
 from trigger_and_logs_manager import TriggerCodes, init_triggers
-
-# --- Helper: wait while still catching ESC (polling) ---
-def wait_with_escape(seconds, kb, io):
-    """Busy-wait while polling keys so ESC/QuitSignal is honored during waits."""
-    end_t = core.getTime() + float(seconds)
-    while core.getTime() < end_t:
-        _ = poll_keys(kb, io)  # ensures QuitSignal can propagate
-        core.wait(0.001)
-
-def save_and_quit(
-    win,
-    rec,
-    outdir,
-    prefix,
-    CURSOR,
-    keypr,
-    TaskTimings,
-    Hz,
-    MTF,
-    trials=None,
-    TotalGain=None,
-    all_fmt="xlsx",   # choose: "csv" | "xlsx" | "mat"
-    csv_mode="long",  # currently only "long" is implemented
-    mode=None,        
-    durations=None,    
-):
-    """
-    Centralized save & shutdown.
-    - Tries to save in `outdir`.
-    - If it fails (permissions, invalid path, etc.), fallback to a safe temp dir.
-    - Always closes the window and quits PsychoPy.
-    """
-    save_path = None
-    try:
-        try:
-            os.makedirs(outdir, exist_ok=True)
-            save_path = rec.save_all(
-                fmt=all_fmt,
-                trials_df=trials,
-                cursor=CURSOR,
-                keypr=keypr,
-                tasktimings=TaskTimings,
-                Hz=Hz,
-                MTF=MTF,
-                TotalGain=TotalGain,
-                csv_mode=csv_mode,
-                mode=mode,                
-                durations=durations, 
-            )
-        except Exception as e:
-            logging.error(f"❌ Failed to save in {outdir}: {e}")
-            fallback_dir = Path("./session_data_fallback")
-            try:
-                fallback_dir.mkdir(parents=True, exist_ok=True)
-                logging.warning(f"⚠️ Falling back to {fallback_dir}")
-                # Create a temporary recorder in fallback dir
-                fb_rec = DataRecorder(output_dir=str(fallback_dir), prefix=prefix)
-                save_path = fb_rec.save_all(
-                    fmt=all_fmt,
-                    trials_df=trials,
-                    cursor=CURSOR,
-                    keypr=keypr,
-                    tasktimings=TaskTimings,
-                    Hz=Hz,
-                    MTF=MTF,
-                    TotalGain=TotalGain,
-                    csv_mode=csv_mode,
-                )
-            except Exception as e2:
-                logging.critical(f"🚨 Failed to save even in fallback dir: {e2}")
-    finally:
-        try:
-            if win:
-                win.close()
-        finally:
-            core.quit()
-    return save_path
+from timing import wait_with_escape
+from save_utils import save_and_quit
 
 
 if __name__ == "__main__":
@@ -119,13 +44,9 @@ if __name__ == "__main__":
     dur = get_task_duration(cfg.eyetracker, cfg.population, Task.EBDM, cfg.experiment)
     cond_er, indx_effort_trials = GetTrialCondition(cfg.nTrials, cfg.nEffortTrials, cfg.population)
 
-    # TEST
-    # print(cond_er)
-    # cond_er[0,0] = 0.95
-    # cond_er[0,1] = 5
-    # cond_er[1,0] = 0.5
-    # cond_er[1,1] = 20
-    # print(cond_er)
+    print(cond_er)
+
+    sys.exit()
 
     trials = init_trials(
         n_trials=cfg.nTrials, 

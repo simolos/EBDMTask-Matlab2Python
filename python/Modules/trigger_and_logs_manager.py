@@ -21,14 +21,12 @@ class TriggerCodes(IntEnum):
     PREP_DM = 2
     START_DM = 3   # Offer appears on screen
     DECISION_MADE = 4       # Decision onset
-
     REQUIRED_HAND_POSITION = 5
     PREP_EP = 6
     START_EP = 7
     WAITING_FEEDBACK_EP = 8
-    FEEDBACK_ANTICIPATION = 9
-    FEEDBACK_EP = 10
-    ITI = 11
+    FEEDBACK_EP = 9 # Success/Failure/Anticipation
+    ITI = 10
   
 
 # --- TriggerManager class ---
@@ -37,7 +35,7 @@ class TriggerManager:
     Asynchronous trigger manager for parallel (MRI, TMSroom) or serial (Arduino) port.
     It 1) sends triggers to hardware (if enabled=True); 2) record timing (always)
 
-    Logic: the main task puts a trigger request in queue through the send method, then the worker thread reads the queue, sends the trigger and logs the time
+    Logic: the main task puts a trigger request in queue through the send() method, then the worker thread reads the queue, sends the trigger and logs the time
 
     Time logging:
      - requested_time = when the main behavioral task requested the trigger
