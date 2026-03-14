@@ -23,6 +23,8 @@ import sys
 from trigger_and_logs_manager import TriggerCodes, init_triggers
 from timing import wait_with_escape
 from save_utils import save_and_quit
+from display import create_window
+from compute_total_gain import compute_total_gain
 
 
 if __name__ == "__main__":
@@ -43,10 +45,6 @@ if __name__ == "__main__":
     # Trials & durations
     dur = get_task_duration(cfg.eyetracker, cfg.population, Task.EBDM, cfg.experiment)
     cond_er, indx_effort_trials = GetTrialCondition(cfg.nTrials, cfg.nEffortTrials, cfg.population)
-
-    print(cond_er)
-
-    sys.exit()
 
     trials = init_trials(
         n_trials=cfg.nTrials, 
@@ -73,13 +71,7 @@ if __name__ == "__main__":
     triggers = init_triggers(cfg)
 
     # --- PsychoPy window ---
-    mon = monitors.Monitor('MyMonitor')
-    if cfg.fullscreen == 'Y':
-        win = visual.Window(monitor=mon, screen=1, fullscr=True, color=(0.8, 0.8, 0.8), units='pix')
-        gain_screen = 1
-    else:
-        win = visual.Window(size=(1280, 720), monitor=mon, screen=0, fullscr=False, color=(0.8, 0.8, 0.8), units='pix')
-        gain_screen = 1
+    win, gain_screen = create_window(cfg)
 
     screens = Screens(win, gain_screen=gain_screen, lang=cfg.language)
     kb, io = init_keyboard()
@@ -214,11 +206,7 @@ if __name__ == "__main__":
         # Implement here final trigger to the websocket 
 
         # Compute total gain
-        mask = (
-            ((trials['Acceptance'] == 1) & (trials['EffortProduction'].fillna(0) == 0))
-            | ((trials['Acceptance'] == 1) & (trials['EffortProduction'].fillna(0) == 1) & (trials['success'].fillna(0) == 1))
-        )
-        TotalGain = trials.loc[mask, 'reward'].sum() / 100
+        TotalGain = compute_total_gain(trials)
     
         for elem in screens.bRectCross:
             elem.draw()
