@@ -168,7 +168,7 @@ if __name__ == "__main__":
     CURSOR, nFrames = init_cursor_matrix(dur.Task, Hz, cfg.nTrials)
     keypr = np.full((nFrames, cfg.nTrials), np.nan, dtype=float)
 
-    # Triggers initialization
+    # Triggers initialization (HERE I WILL NEED TO DEFINE WHICH TRIGGERS ARE SENT!! EYELINK, MRI, WEBSOCKET, ETC.)
     triggers = init_triggers(cfg)
 
     # Waiting for start (either MRI trigger or manual start, keypress 5)
@@ -229,12 +229,14 @@ if __name__ == "__main__":
                     trials=trials,
                     CURSOR=CURSOR,
                     TaskTimings=TaskTimings,
+                    triggers=triggers,
                     keypr=keypr,
                     cfg=cfg,  # <-- explicitly pass cfg here
                     task = Task.EBDM,
                     flag_MultipleKeyPressed=flag_MultipleKeyPressed,
                     KEYBOARD_MODE=True,
                 )
+
 
             # --- Constant durations to server (small JSON) ---
             if streamer is not None:
@@ -249,12 +251,20 @@ if __name__ == "__main__":
                 {"event_": "EndOfTrial"}
                 )
 
-            # Intertrial interval 
-            for elem in screens.bRectCross:
-                elem.draw()
-            win.flip()
-            wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
+            if trials.loc[i, 'Anticipation_EP'] == 0:
 
+
+                # Extended intertrial interval 
+                for elem in screens.bRectCross:
+                    elem.draw()
+                win.flip()
+                wait_with_escape((trials.ITI[i]+dur.TimeForPupilBaselineBack) / 1000.0, kb, io)
+
+            else:
+                for elem in screens.bRectCross:
+                    elem.draw()
+                win.flip()
+                wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
                 
 
             # --- Record enriched trial row (Hz, MTF) ---

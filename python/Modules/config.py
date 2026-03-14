@@ -194,8 +194,10 @@ def parse_args(task:Task, expe:Expe):
 
 # --- UI constants ---
 keys_choice = ["left", "right"]  # Selection keys: [left]=Yes, [right]=No
-AWE_KEYS = {"q", "z", "e"}          # Finger position combo (display only)
+AWE_KEYS = {"a", "w", "e"}          # Finger position combo (display only)
 CTRL_KEY = {'lctrl'}
+KEY_PRESS = 22 # The event of pressing a key is coded as 22 (Psychopy settings)
+KEY_RELEASE = 23 # The event of releasing a key is coded as 23 (Psychopy settings)
 MRI_trigger_key = {'5'}
 
 

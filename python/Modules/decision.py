@@ -102,7 +102,7 @@ def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, tri
         ##### Send out triggers
         if not start_trigger_sent:
             if triggers is not None:  
-                triggers.send(TriggerCodes.DM)
+                triggers.send(TriggerCodes.START_DM)
             start_trigger_sent = True
 
 

@@ -19,8 +19,10 @@ except ImportError as e:
 class TriggerCodes(IntEnum):
     TI = 1                   # MRI trigger / scanner sync
     PREP_DM = 2
-    DM = 3   # Offer appears on screen
+    START_DM = 3   # Offer appears on screen
     DECISION_MADE = 4       # Decision onset
+    PREP_EP = 5
+    START_EP = 6
   
 
 # --- TriggerManager class ---
