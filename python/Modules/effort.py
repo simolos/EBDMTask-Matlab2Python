@@ -2,17 +2,11 @@
 # Purpose: Effort phase subroutines (positioning, get-ready, EP frames, feedback).
 from psychopy import core
 from keyboard import poll_keys, clear_events
-from config import combo, parse_args, Task
+from config import AWE_KEYS, CTRL_KEY, KEY_PRESS, KEY_RELEASE, parse_args, Task
 import numpy as np
 from enum import Enum, auto
 import sys
-
-
-
-# ======= CONSTANTS ========
-KEY_PRESS = 22
-KEY_RELEASE = 23
-# ==========================
+from trigger_and_logs_manager import TriggerCodes
 
 
 # ---------- helpers ----------
@@ -29,308 +23,324 @@ def all_keys_pressed(kb, win=None):
     held = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
     return held
 
+def compute_cursor_position(mean_onsets, effort, Hz, MTF, ws_streaming, task):
+
+    if task == Task.EBDM:
+        if ws_streaming:
+            offset = 1 - effort
+            cursor_position = ((mean_onsets * Hz) / MTF) / effort
+            cursor_position = (cursor_position - offset) * (1 + offset)
+        else:
+            cursor_position = (((mean_onsets * Hz) / MTF) - 0.3) / 0.7
+   
+    elif task == Task.MTF:
+            cursor_position = (((mean_onsets * Hz) / MTF) - 0.3) / 1.4 
+
+    return max(0, min(cursor_position, 1)) 
+
+def detect_tap(events, tap_key):
+
+    for ev in events:
+        key_name = ev.key if hasattr(ev, "key") else ev
+
+        if key_name == tap_key and ev.type == KEY_PRESS:
+            return True
+
+    return False
+
+
+def draw_ep_frame(task, screens, reward_val, target_effort, cfg):
+    
+    def draw_buffer(buffer):
+        for elem in buffer:
+            elem.draw()
+
+    if task == Task.EBDM:
+        draw_buffer(screens.bTaskWait)
+        draw_buffer(screens._create_reward_buffer(reward_val, target_effort))
+        draw_buffer(screens._create_bar_buffer(target_effort))
+
+    elif task == Task.MTF and cfg.block_id == "MTF_PRE":
+        draw_buffer(screens.bTaskWaitCross)
+
+    elif task == Task.MTF and cfg.block_id == "MTF_VF":
+        draw_buffer(screens.bTaskWait)
+        draw_buffer(screens._create_bar_buffer(target_effort))
+
+    draw_buffer(screens.bGoEP)
+
+
 
 # ---------- phases ----------
 def hand_positioning_phase(
-    streamer, i, win, screens, kb, expClock, dur, trials, TaskTimings,
+    streamer, i, win, screens, kb, expClock, dur, trials, TaskTimings, triggers,
     flag_MultipleKeyPressed, cfg, io=None, 
 ):
     """
-    Show the finger-positioning buffer and wait until the required combo is held
-    continuously for dur['TimeAfterPositionRight'] ms.
-    Writes trials.at[i,'KeyPositionTime'] (time until first correct pose).
+    STEPS:
+    1) Show hand positioning screen
+    2) Detect when the required keys are pressed and wait that the keys are held for DUR_HOLD_REQUIRED
     """
 
-    # --- Configuration
-    # cfg = parse_args("main")
+    ##### Convert trial durations to seconds
+    DUR_HOLD_REQUIRED    = int(dur.TimeAfterPositionRight) / 1000.0
 
+    ##### Select screen and required keys to be held
     if flag_MultipleKeyPressed == 1:
-        for elem in screens.bPosition_fingers_1:
-            elem.draw()
+        draw_buffer = screens.bPosition_fingers_1
+        REQUIRED_KEYS = AWE_KEYS
     else:
-        for elem in screens.bPosition_finger_2:
-            elem.draw()
+        draw_buffer = screens.bPosition_finger_2
+        REQUIRED_KEYS = CTRL_KEY
+
+    ##################################################################################################
+    # 1) Show hand positioning screen
+    ##################################################################################################
+    
+    for elem in draw_buffer:
+        elem.draw()        
     win.flip()
 
-    t0 = core.getTime()
-    trials.at[i, 'KeyPositionTime'] = np.nan
-    held_since = None
+    ##### Send out triggers
+    if triggers is not None:  
+        triggers.send(TriggerCodes.REQUIRED_HAND_POSITION)
+
+    ##################################################################################################
+    # 2) Detect when the required keys are pressed and wait that the keys are held for DUR_HOLD_REQUIRED
+    ##################################################################################################
+
+    start_time = core.getTime()
+    hold_start_time = None
 
     while True:
-        # Always poll to catch ESC through poll_keys
-        _ = poll_keys(kb, io)
-        tnow = core.getTime()
-        held = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
+        _ = poll_keys(kb, io) # Allow ESC detection
+        current_time = core.getTime()
+        held_keys = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
 
-        if flag_MultipleKeyPressed == 1:
-            if held == combo:
-                if held_since is None:
-                    held_since = tnow
-                    trials.at[i, 'KeyPositionTime'] = tnow - t0
-                elif (tnow - held_since) > (dur.TimeAfterPositionRight / 1000.0):
-                    TaskTimings.append((expClock.getTime(), f"T{i} Hand in Position"))
-                    if cfg.ws_streaming.lower() == "true":
-                        streamer.send_event("hand positionning time", {"trial": i + 1, "t": expClock.getTime()})
-                    break
-            else:
-                held_since = None
-                trials.at[i, 'KeyPositionTime'] = np.nan
+        if held_keys == REQUIRED_KEYS:
 
-        elif flag_MultipleKeyPressed == 2:
-            tap_key = {'lctrl'}
-            if held == tap_key:
-                if held_since is None:
-                    held_since = tnow
-                    trials.at[i, 'KeyPositionTime'] = tnow - t0
-                elif (tnow - held_since) > (dur.TimeAfterPositionRight / 1000.0):
-                    TaskTimings.append((expClock.getTime(), f"T{i} Hand in Position"))
-                    if cfg.ws_streaming.lower() == "true":
-                        streamer.send_event("hand positionning time", {"trial": i + 1, "t": expClock.getTime()})
-                    break
-            else:
-                held_since = None
-                trials.at[i, 'KeyPositionTime'] = np.nan
+            if hold_start_time is None:
+                hold_start_time = current_time
+                trials.at[i, 'KeyPositionTime'] = current_time - start_time
+
+            elif (current_time - hold_start_time) > DUR_HOLD_REQUIRED:
+
+                if cfg.ws_streaming.lower() == "true":
+                    streamer.send_event("hand positionning time", {"trial": i + 1, "t": expClock.getTime()})
+                break
+        else:
+            hold_start_time = None
 
         core.wait(0.001)  # tiny sleep to avoid busy spin
 
 
 def get_ready_phase(
     streamer, i, win, screens, kb, io, expClock, trials,
-    flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg, dur
+    flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, triggers, cfg, dur
 ):
     """
-    Display 'Get ready' and detect anticipation within the per-trial EP jitter.
-    Reads trials.loc[i,'durPrep_EP'] (ms) and writes trials.at[i,'Anticipation_EP'].
-    Anticipation logic:
-      - mode 2: anticipation on KEY_RELEASE of active key
-      - else:   anticipation on KEY_PRESS of active key
+    STEPS:
+    1) Show get_ready screen
+    2) Detect anticipation events within dur_prep_EP
+
+    LOGIC:
+    - If hold CTRL mode --> anticipation if key released
+    - If hold AWE mode --> anticipation if key pressed
     """
 
-    print("Entered get_ready_phase")
-
-    TaskTimings.append((expClock.getTime(), f"T{i} Get ready"))
+    ##################################################################################################
+    # 1) Show get_ready screen
+    ##################################################################################################
+  
     for elem in screens.bGetReadyForEP:
         elem.draw()
     win.flip()
 
-    prepEPClock = core.Clock()
+    ##### Send out triggers
+    if triggers is not None:  
+        triggers.send(TriggerCodes.PREP_EP)
+
+    preparationClock = core.Clock()
     TaskTimings.append((expClock.getTime(), f"T{i} Prep EP"))
 
     clear_events(kb, io)  # drop any buffered events
-    activeKey = 'f' if flag_MultipleKeyPressed == 1 else 'lctrl'
+    active_key = 'f' if flag_MultipleKeyPressed == 1 else 'lctrl'
+    anticipation_event = KEY_RELEASE if flag_MultipleKeyPressed == 2 else KEY_PRESS
     trials.at[i, 'Anticipation_EP'] = 0
 
-    dur_prep_ms = int(trials.loc[i].get('durPrep_EP', 1000))
+    dur_prep_EP = int(trials.loc[i].get('durPrep_EP', 1000))
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
         "Preparation EP start",
-        {"event_": "PrepEP", "dur_Prep_EP": round((dur_prep_ms / 1000),2)} 
+        {"event_": "PrepEP", "dur_Prep_EP": round((dur_prep_EP / 1000),2)} 
         ) 
         
 
-    while prepEPClock.getTime() < (dur_prep_ms / 1000.0):
+    while preparationClock.getTime() < (dur_prep_EP / 1000.0):
         events = poll_keys(kb, io)  # also catches ESC
         if events:
             for ev in events:
                 key_name = ev.key if hasattr(ev, 'key') else ev
-                if flag_MultipleKeyPressed == 2:
-                    if key_name == activeKey and ev.type == KEY_RELEASE:
-                        trials.at[i, 'Anticipation_EP'] = 1
-                        # if cfg.ws_streaming.lower() == "true":
-                        #     streamer.send_event(
-                        #     "Preparation to the EPFeedback phase",
-                        #     {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
-                        #     )
-                        break
-                else:
-                    if key_name == activeKey and ev.type == KEY_PRESS:
-                        trials.at[i, 'Anticipation_EP'] = 1
-                        # if cfg.ws_streaming.lower() == "true":
-                        #     streamer.send_event(
-                        #     "Preparation to the EPFeedback phase",
-                        #     {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
-                        #     )                        
-                        break
+                if key_name == active_key and ev.type == anticipation_event:
+                    trials.at[i, 'Anticipation_EP'] = 1
+                    # if cfg.ws_streaming.lower() == "true":
+                    #     streamer.send_event(
+                    #     "Preparation to the EPFeedback phase",
+                    #     {"event_": "EPFeedback", "EPFeedback": -1, "dur_EPFeedback": dur.Feedback}
+                    #     )
+                    break
+                
         core.wait(0.001)
 
 
 def effort_production_phase(
     streamer, keys, i, win, screens, kb, io, expClock,
-    dur, MTF, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg, task
+    dur, MTF, Hz, trials, CURSOR, triggers, keypr,
+    flag_MultipleKeyPressed, cfg, task
 ):
     """
-    EP frame loop:
-      - On each frame, set keypr[f,i]=1 if tap onset is detected, else 0.
-      - First onset defines ReactionTimeEP.
-      - Compute normalized cursor from mean onset rate.
-      - Draw EP layers and flip at Hz pace until nFrames.
+    Effort-production phase
+
+    LOGIC:
+    1) Compute the target effort level to display
+    2) Display the initial effort production screen and send out trigger
+    3) Initialize variables and clear any residual keyboard events
+    4) Run the frame loop for the duration of the effort phase
+    5) On each frame, detect tap onsets and validate them depending on the key mode
+    6) Record the reaction time of the first valid tap
+    7) Compute the cursor position and draw it 
+    8) Enforce frame pacing to maintain the target refresh rate
     """
 
+    ##### Triggers initialization
+    ws_streaming = cfg.ws_streaming.lower() == "true"
 
-    # --- Configuration
-    # cfg = parse_args("main")
+    ##################################################################################################
+    # 1) Compute the target effort level to display
+    ##################################################################################################
+ 
+    ##### Initialization of effort and reward values
+    effort = float(trials.loc[i, "effort"])
+    reward = float(trials.loc[i, "reward"]) if task == Task.EBDM else None
 
-    # Initial 'Go' frame (time zero)
-        
-    for elem in screens.bTaskWait:
-        elem.draw()
-    if task==Task.EBDM:
-        if cfg.ws_streaming.lower() == "true": # If streaming to VR, different effort rescaling!
-            target_effort = 1 - float(trials.loc[i, 'effort'])
+    ##### Compute target effort to display depending on the task
+    if task == Task.EBDM:
 
+        if ws_streaming:
+            target_effort = 1 - effort
         else:
-            target_effort = (float(trials.loc[i, 'effort']) - 0.3) / (1-0.3) # 0.7 replaced by 1-0.3
-        reward_val = float(trials.loc[i, 'reward']) 
-        for elem in screens._create_reward_buffer(reward_val, target_effort):
-            elem.draw()
-        for elem in screens._create_bar_buffer(target_effort):
-            elem.draw()
+            target_effort = (effort - 0.3) / (1 - 0.3)
 
-    elif task==Task.MTF and cfg.block_id == "MTF_VF":
-            target_effort = 0.5
-            for elem in screens._create_bar_buffer(target_effort):
-                elem.draw()
+    elif task == Task.MTF and cfg.block_id == "MTF_VF":
 
+        target_effort = 0.5
+
+    ##################################################################################################
+    # 2) Display the initial effort production screen and send out trigger
+    ##################################################################################################
+
+    ##### Display first EP screen (to avoid discontinuity)
+    elem = draw_ep_frame(task, screens, reward, target_effort, cfg)
     win.flip()
 
+    ##### Send out triggers
+    if triggers is not None:  
+        triggers.send(TriggerCodes.START_EP)
+
+    ##################################################################################################
+    # 3) Initialize variables and clear any residual keyboard events
+    ##################################################################################################
+    tap_key = 'f' if flag_MultipleKeyPressed == 1 else 'lctrl'
     EPClock = core.Clock()
-    TaskTimings.append((expClock.getTime(), f"T{i} Start EP"))
-    # if cfg.ws_streaming.lower() == "true":
-    #     opening_percentage = target_effort - factor_compensating_for_leonardosbug # -0.05 to compensate Leonardo's bug
-    #     streamer.send_event(
-    #         "EP start",
-    #         {"event_": "EPphase", "dur_EPphase": dur.Task / 1000, "cursor_pos": opening_percentage}
-    #         )
-
-
-    # Setup
     oneframe = 1.0 / float(Hz)
     nFrames = CURSOR.shape[0]
     started = False
     t0 = EPClock.getTime()
     clear_events(kb, io)
-    tap_key = 'f' if flag_MultipleKeyPressed == 1 else 'lctrl'
+    tap_sum = 0
+    cursor_position = 0
 
-    # Frame loop
-    f = 0
-    while f < nFrames:
-        frame_t0 = EPClock.getTime()
+    ##################################################################################################
+    # 4) Run the frame loop for the duration of the effort phase
+    ##################################################################################################
+    for f in range(nFrames):
 
+        frame_start = EPClock.getTime()
 
-        # Draw static layers
-        if task==Task.EBDM:
-            for elem in screens.bTaskWait:
-                elem.draw()
-            for elem in screens._create_reward_buffer(reward_val, target_effort):
-                elem.draw()
-            for elem in screens._create_bar_buffer(target_effort):
-                elem.draw()
-        elif task==Task.MTF and cfg.block_id == "MTF_PRE":
-            for elem in screens.bTaskWaitCross:
-                elem.draw()
-        elif task==Task.MTF and cfg.block_id == "MTF_VF":
-            for elem in screens.bTaskWait:
-                elem.draw()
-            for elem in screens._create_bar_buffer(target_effort):
-                elem.draw()
+        elem = draw_ep_frame(task, screens, reward, target_effort, cfg)
 
-        for elem in screens.bGoEP:
-            elem.draw()
+        ##################################################################################################
+        # 5) On each frame, detect tap onsets and validate them depending on the key mode
+        ##################################################################################################
 
+        events = poll_keys(kb, io) 
 
+        tap_happened = events and detect_tap(events, tap_key) \
 
-        # Onset detection per mode
-        if flag_MultipleKeyPressed == 1:
-            events = poll_keys(kb, io)
-            if not events:
-                keypr[f, i] = 0
-            else:
-                for ev in events:
-                    key_name = ev.key if hasattr(ev, 'key') else ev
-                    if key_name == tap_key and ev.type == KEY_PRESS:
-                        keys = all_keys_pressed(kb, win)
-                        # Accept if combo is held, with or without the tap key co-held
-                        if keys == (combo | {tap_key}) or keys == combo:
-                            keypr[f, i] = 1
-                            if not started:
-                                trials.at[i, 'ReactionTimeEP'] = EPClock.getTime() - t0
-                                started = True
-                        else:
-                            keypr[f, i] = 0
-                    else:
-                        keypr[f, i] = 0
-        else:
-            events = poll_keys(kb, io)
-            if not events:
-                keypr[f, i] = 0
-            else:
-                for ev in events:
+        accept = tap_happened
 
-                    key_name = ev.key if hasattr(ev, 'key') else ev
-                    if key_name == tap_key and ev.type == KEY_PRESS:
-                        keypr[f, i] = 1
-                        if not started:
-                            trials.at[i, 'ReactionTimeEP'] = EPClock.getTime() - t0
-                            started = True
-                    else:
-                        keypr[f, i] = 0
+        if tap_happened and flag_MultipleKeyPressed:
+            keys_pressed = all_keys_pressed(kb, win) 
+            accept = keys_pressed == (AWE_KEYS | {tap_key}) or keys_pressed == AWE_KEYS
 
-        # Cursor from mean onset rate
-        if task==Task.EBDM:
-            mean_onsets = np.mean(keypr[: f + 1, i]) if f >= 0 else 0.0
-            if cfg.ws_streaming.lower() == "true": # If streaming to VR, different effort rescaling!
-                e = float(trials.loc[i, 'effort'])
-                offset = 1-e # shit by Leonardo
-                cursor_pos = ((mean_onsets * Hz) / MTF) / e
-                cursor_pos = (cursor_pos - offset) * (1 + offset)
-                
-                if cursor_pos < 0:
-                    cursor_pos = 0
-                elif cursor_pos > 1:
-                    cursor_pos = 1
-            else:
-                cursor_pos = (((mean_onsets * Hz) / MTF) - 0.3) / 0.7
-                if cursor_pos < 0:
-                    cursor_pos = 0
-                elif cursor_pos > 1:
-                    cursor_pos = 1
+        keypr[f, i] = int(bool(accept))
 
-            CURSOR[f, i] = cursor_pos
-            if cfg.ws_streaming.lower() == "true":
-                streamer.send_event(
-                    "EP phase",
-                    {"event_": "EPphase", "dur_EPphase": 6, "cursor_pos": round(cursor_pos, 2)} # -0.05 to compensate for Leonardo's bug
+        ##################################################################################################
+        # 6) Record the reaction time of the first valid tap
+        ##################################################################################################
+
+        if accept and not started:
+            ##### Record the reaction time
+            trials.at[i, 'ReactionTimeEP'] = EPClock.getTime() - t0
+            started = True
+
+        ##################################################################################################
+        # 7) Compute the cursor position and draw it 
+        ##################################################################################################        
+
+        ##### Update the tap rate
+        tap_sum += keypr[f, i]
+        mean_onsets = tap_sum / (f + 1)
+
+        if task in (Task.EBDM, Task.MTF) and (task != Task.MTF or cfg.block_id == 'MTF_VF'):
+
+            if task == Task.EBDM:
+
+                cursor_position = compute_cursor_position(
+                    mean_onsets, effort, Hz, MTF, ws_streaming, task
+                )
+
+                if ws_streaming:
+                    streamer.send_event(
+                        "EP phase",
+                        {
+                            "event_": "EPphase",
+                            "dur_EPphase": 6,
+                            "cursor_pos": round(cursor_position, 2)
+                        }
                     )
 
-            # Dynamic cursor
-            for elem in screens._create_cursor_dynamic_buffer(CURSOR[f, i]):
+            CURSOR[f, i] = cursor_position
+
+            for elem in screens._create_cursor_dynamic_buffer(cursor_position):
                 elem.draw()
 
-        elif task==Task.MTF and cfg.block_id == 'MTF_VF':
-            mean_onsets = np.mean(keypr[: f + 1, i]) if f >= 0 else 0.0
-
-            cursor_pos = (((mean_onsets * Hz) / cfg.MTF) - 0.3) / 1.4 
-            if cursor_pos < 0:
-                cursor_pos = 0
-            elif cursor_pos > 1:
-                cursor_pos = 1
-            CURSOR[f, i] = cursor_pos
-
-            # Dynamic cursor
-            for elem in screens._create_cursor_dynamic_buffer(CURSOR[f, i]):
-                elem.draw()
-
+ 
         win.flip()
 
-        f += 1
-        # Pace to Hz
-        elapsed = EPClock.getTime() - frame_t0
+        ##################################################################################################
+        # 8) Enforce frame pacing to maintain the target refresh rate
+        #################################################################################################
+      
+        elapsed = EPClock.getTime() - frame_start
         remain = oneframe - elapsed
+        
         if remain > 0:
             core.wait(remain)
 
 
-def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg):
+
+def waiting_for_feedback_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg, triggers):
     """Cross between EP and feedback. Uses dur['Blank2'] (ms).
         streamer: is a dict with so and so
         win: is the Windows object from foo
@@ -340,8 +350,14 @@ def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg):
     for elem in screens.bTaskWaitCross:
         elem.draw()
     win.flip()
+
+    ##### Send out triggers
+    if triggers is not None:  
+        triggers.send(TriggerCodes.WAITING_FEEDBACK_EP)
+
     core.wait(dur.Blank2 / 1000.0)
-    TaskTimings.append((expClock.getTime(), f"T{i} WaitingFeedback"))
+
+
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
             "Preparation to the EPFeedback phase",
@@ -349,27 +365,29 @@ def blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg):
             )
 
 
-def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, task=Task, MTF=None, Hz=None):
+def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, triggers, expClock, dur, cfg, task=Task, MTF=None, Hz=None):
     """
     Feedback based on mean onset frequency:
       success if (mean(keypr)*Hz)/MTF >= eff_t
       big failure if < 0.7*eff_t, else failure.
     """
-
-    # --- Configuration
-    # cfg = parse_args("main")
     
     if trials.loc[i, 'Anticipation_EP'] == 1:
+        print("ANTICIPATION!")
         trials.at[i, 'success'] = -1
         for elem in screens.bAnticip:
             elem.draw()
-        TaskTimings.append((expClock.getTime(), f"T{i} FeedbackAnticip"))
-        if cfg.ws_streaming.lower() == "true":
-            streamer.send_event(
-            "EPFeedback",
-            {"event_": "EPFeedback", "EPFeedback": int(trials.at[i, 'success']), "dur_EPFeedback": dur.Feedback / 1000}
-            )
+        # if cfg.ws_streaming.lower() == "true":
+        #     streamer.send_event(
+        #     "EPFeedback",
+        #     {"event_": "EPFeedback", "EPFeedback": int(trials.at[i, 'success']), "dur_EPFeedback": dur.Feedback / 1000}
+        #     )
         win.flip()
+
+        ##### Send out triggers
+        if triggers is not None:  
+            triggers.send(TriggerCodes.FEEDBACK_EP)
+
         core.wait(dur.Feedback / 1000.0)
         return
     
@@ -397,27 +415,18 @@ def feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings
         
 
         win.flip()
+
+        ##### Send out triggers
+        if triggers is not None:  
+            triggers.send(TriggerCodes.FEEDBACK_EP)
+
         core.wait(dur.Feedback / 1000.0)
 
-
-def pupil_baseline_phase(streamer, win, screens, dur):
-    """Cross for pupil baseline recovery. Uses dur['TimeForPupilBaselineBack'] (ms)."""
-    for elem in screens.bRectCross:
-        elem.draw()
-    win.flip()
-    core.wait(dur.TimeForPupilBaselineBack / 1000.0)
-    for elem in screens.bRectCross:
-        elem.draw()
-    win.flip()
-
-# class EffortParameters:
-#    def __init__(self):
-#        self.streamer = some_default_streamer
 
 def effort_phase(
     streamer, i, win, screens, kb, io,
     expClock, dur, MTF, Hz,
-    trials, CURSOR, TaskTimings, keypr, cfg, task:Task,
+    trials, CURSOR, TaskTimings, triggers, keypr, cfg, task:Task,
     flag_MultipleKeyPressed=0, KEYBOARD_MODE=True
 ):
     """
@@ -430,31 +439,27 @@ def effort_phase(
         if col not in trials.columns:
             trials[col] = np.nan
     trials.at[i, 'EffortProduction'] = 1
-
-    print(f"Trial {i}")
     
     if flag_MultipleKeyPressed != 0:
         hand_positioning_phase(
             streamer, i, win, screens, kb, expClock, dur, trials, TaskTimings,
-            flag_MultipleKeyPressed, cfg, io=io
+            flag_MultipleKeyPressed, cfg, io=io,
         )
 
     get_ready_phase(
         streamer, i, win, screens, kb, io, expClock, trials,
-        flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, cfg, dur
+        flag_MultipleKeyPressed, KEYBOARD_MODE, TaskTimings, triggers, cfg, dur
     )
 
     if trials.loc[i, 'Anticipation_EP'] == 0:
         effort_production_phase(
             streamer, ['f'], i, win, screens, kb, io, expClock,
-            dur, MTF, Hz, trials, CURSOR, TaskTimings, keypr, flag_MultipleKeyPressed, cfg, task
+            dur, MTF, Hz, trials, CURSOR, triggers, keypr, flag_MultipleKeyPressed, cfg, task
         )
 
-    blank_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg)
+    waiting_for_feedback_phase(streamer, win, screens, dur, expClock, TaskTimings, i, cfg, triggers)
     
-    feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, expClock, dur, cfg, task, MTF=MTF, Hz=Hz)       
-
-    pupil_baseline_phase(streamer, win, screens, dur)
+    feedback_phase(streamer, i, win, screens, CURSOR, keypr, trials, TaskTimings, triggers, expClock, dur, cfg, task, MTF=MTF, Hz=Hz)       
 
     if trials.loc[i, 'Anticipation_EP'] == 1 and task == Task.MTF:
         if not getattr(effort_phase, "_repeated", False):

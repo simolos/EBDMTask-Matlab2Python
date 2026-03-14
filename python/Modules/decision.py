@@ -2,154 +2,175 @@ from psychopy import core
 from keyboard import poll_keys, clear_events
 from config import keys_choice, parse_args, get_reward_proposed
 import numpy as np
+from trigger_and_logs_manager import TriggerCodes
 
-def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight, cfg):
+def decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, triggers, flag_MapYesAtRight, cfg):
     """
-    Decision phase with strict post-response display:
-    - Response must occur before DM_S (decision window).
-    - After a valid response, keep drawing the 'tick' for AFTER_S seconds, then exit loop.
-    - Writes results back in-place to `trials`.
+    STEPS:
+    1) Preparation to the decision-making phase
+    2) Beginning of the decision-making phase (offer presentation)
+    3) Response detection, if expressed within the decision window (DUR_DM); Response displayed for DUR_DM_FEEDB
+    4) Log response (and response time if the decision was actually expressed, NaN instead)
     """
-    # --- Configuration
-    # cfg = parse_args("main")
 
-    # --- 0) Resolve per-trial inputs & durations ---
-    row = trials.loc[i]
-    dur_prep_ms  = int(row.get('durPrep_DM', 1000))
-    dur_dm_ms    = int(dur.DM)
-    after_dm_ms  = int(dur.TimeAfterDMade)
+    ##### Convert trial durations to seconds
+    current_trial = trials.loc[i]
+    
+    DUR_PREP_DM  = int(current_trial['durPrep_DM']) / 1000.0
+    DUR_DM    = int(dur.DM) / 1000.0
+    DUR_DM_FEEDB  = int(dur.TimeAfterDMade) / 1000.0
 
-    # Convert once to seconds
-    PREP_S   = dur_prep_ms / 1000.0
-    DM_S     = dur_dm_ms   / 1000.0
-    AFTER_S  = after_dm_ms / 1000.0
-
-    # --- 1) Reset per-trial writable vars ---
-    trials.at[i, 'Anticipation_DM'] = 0
-    resp = -1
+    ##### Variables/flags initialization
+    response = -1
     decision_made = False
     choice = None
-    t_resp = None
+    decision_time = None
     start_trigger_sent = False
 
-    # --- 2) Preparation (bDMcross) ---
+    ##### Initialization of effort and reward
+    effort_tested = float(current_trial['effort'])
+    rew_tested = float(current_trial['reward'])
+
+    if cfg.ws_streaming.lower() == "true": # If streaming to VR, different effort rescaling!
+        eff_norm = 1 - effort_tested                
+    else:
+        eff_norm = (effort_tested - 0.3) / 0.7
+        eff_norm = max(0.0, min(1.0, eff_norm))
+
+
+    ##################################################################################################
+    # 1) Preparation to the decision-making phase
+    ##################################################################################################
+
+    ##### Display screen for preparation of the decision-making phase
     for elem in screens._create_dmcross_buffer(flag_MapYesAtRight=flag_MapYesAtRight):
         elem.draw()
     win.flip()
 
+    ##### Send out triggers
+    if triggers is not None:  
+        triggers.send(TriggerCodes.PREP_DM)
+
     if cfg.ws_streaming.lower() == "true":
         streamer.send_event(
             "Preparation DM start",
-            {"event_": "PrepDM", "dur_Prep_DM": round(PREP_S,2)}
+            {"event_": "PrepDM", "dur_Prep_DM": round(DUR_PREP_DM,2)}
         )
 
-    prepClock = core.Clock()  # zero at prep start
-    while prepClock.getTime() < PREP_S:
-        events = poll_keys(kb, io)  # keep to detect escape
+    ##### Checking for anticipation
+    preparationClock = core.Clock()
+    while preparationClock.getTime() < DUR_PREP_DM:
+        events = poll_keys(kb, io)
         if events and trials.at[i, 'Anticipation_DM'] == 0:
             for ev in events:
                 key_name = ev.key if hasattr(ev, 'key') else ev
                 if key_name in keys_choice:
                     trials.at[i, 'Anticipation_DM'] = 1
-                    TaskTimings.append((expClock.getTime(), f"T{i} Anticipation DM"))
                     break
-        core.wait(0.001)
-    TaskTimings.append((expClock.getTime(), f"T{i} Prep DM"))
+        core.wait(0.001) # check if really needed!
 
-    # --- 3) Decision making window ---
+
+    ##################################################################################################
+    # 2) Beginning of the decision-making phase
+    ##################################################################################################
+
     clear_events(kb, io)
-    decClock = core.Clock()  # zero at DM start
-    decision_window_end = DM_S        # absolute (relative to decClock)
-    post_resp_end = None              # set after first valid response
+    decisionClock = core.Clock()  
 
     while True:
-        now = decClock.getTime()
+        current_time = decisionClock.getTime()
 
-        # --- Always poll once per loop to catch 'escape' even if no input needed ---
-        _ = poll_keys(kb, io)  # no-op; poll to ensure escape is processed
+        _ = poll_keys(kb, io) # Always poll once per loop to catch 'escape' even if no input needed 
 
-        # Exit condition: before response -> bounded by DM_S; after response -> bounded by t_resp + AFTER_S
-        current_end = post_resp_end if post_resp_end is not None else decision_window_end
-        if now >= current_end:
+
+        ##### Check exit condition: before response -> bounded by DUR_DM; after response -> bounded by decision_time + DUR_DM_FEEDB
+        time_exit_condition = decision_time+DUR_DM_FEEDB if decision_made else DUR_DM
+        if current_time >= time_exit_condition:
             break
 
-        # Draw dynamic decision buffer with tick when 'choice' is set
-        if cfg.ws_streaming.lower() == "true": # If streaming to VR, different effort rescaling!
-            eff_norm = 1 - float(row['effort'])                  
-        else:
-            eff_norm = (float(row['effort']) - 0.3) / 0.7
-            eff_norm = max(0.0, min(1.0, eff_norm))
-
-
-
+        ##### Display screen for offer presentation
         elems = screens._create_decision_dynamic_buffer(
             effort_level=eff_norm,
-            rew_t=float(row['reward']),
-            choice=choice,                       # when not None, buffer shows the tick
+            rew_t=rew_tested,
+            choice=choice,                       
             flag_MapYesAtRight=flag_MapYesAtRight
         )
         for elem in elems:
             elem.draw()
         win.flip()
 
-        # Send "Start DM" once right after first flip
+        ##### Send out triggers
         if not start_trigger_sent:
-            TaskTimings.append((expClock.getTime(), f"T{i} Start DM"))
-            if cfg.ws_streaming.lower() == "true":
-                allRewards = get_reward_proposed()
-                currentReward = float(row['reward'])
-                RewardLevel = int(np.where(allRewards == currentReward)[0][0]) + 1
-
-                streamer.send_event(
-                    "DM phase (offer presentation)",
-                    {"event_": "DMphase", "dur_DMphase": 6, "Effort": 1 - eff_norm, "Reward": RewardLevel} # this 1-eff_norm is already done in the VR, here it only compensates for line 78 and it's for lab-based coherent visualization during VR
-                    )     # round(DM_S,2)           
+            if triggers is not None:  
+                triggers.send(TriggerCodes.START_DM)
             start_trigger_sent = True
 
-        # Poll keys only if response not yet made and still inside DM window
-        if not decision_made and now < decision_window_end:
+
+        # Send "Start DM" once right after first flip
+        # if not start_trigger_sent:
+        #     #TaskTimings.append((expClock.getTime(), f"T{i} Start DM"))
+        #     if cfg.ws_streaming.lower() == "true":
+        #         allRewards = get_reward_proposed()
+        #         currentReward = float(current_trial['reward'])
+        #         RewardLevel = int(np.where(allRewards == currentReward)[0][0]) + 1
+
+        #         streamer.send_event(
+        #             "DM phase (offer presentation)",
+        #             {"event_": "DMphase", "dur_DMphase": 6, "Effort": 1 - eff_norm, "Reward": RewardLevel} # this 1-eff_norm is already done in the VR, here it only compensates for line 78 and it's for lab-based coherent visualization during VR
+        #             )     # round(DUR_DM,2)           
+        #     start_trigger_sent = True
+
+    ##################################################################################################
+    # 3) Response detection
+    ##################################################################################################
+
+        # Poll keys only if response not yet made and time-out not reached yet
+        if not decision_made and current_time < DUR_DM:
             events = poll_keys(kb, io)
             if events:
                 for ev in events:
                     key_name = ev.key if hasattr(ev, 'key') else ev
                     if key_name in keys_choice:
-                        # Map keys -> yes/no depending on layout
+                        # Map keys -> yes/no depending on layout (see config.py)
                         if flag_MapYesAtRight:
                             if key_name == keys_choice[1]:
-                                resp, choice = 1, "yes"
+                                response, choice = 1, "yes"
                             elif key_name == keys_choice[0]:
-                                resp, choice = 0, "no"
+                                response, choice = 0, "no"
                             else:
                                 continue
                         else:
                             if key_name == keys_choice[0]:
-                                resp, choice = 1, "yes"
+                                response, choice = 1, "yes"
                             elif key_name == keys_choice[1]:
-                                resp, choice = 0, "no"
+                                response, choice = 0, "no"
                             else:
                                 continue
 
+                        decision_time = current_time  
                         decision_made = True
-                        t_resp = now  # seconds since DM start
-                        TaskTimings.append((expClock.getTime(), f"T{i} Decided {'Yes' if resp==1 else 'No'}"))
+                        # The tick will be displayed at the next (and last) iteration of the while loop
+
+                        ##### Send out triggers
+                        if triggers is not None:  
+                            triggers.send(TriggerCodes.DECISION_MADE)
+
                         if cfg.ws_streaming.lower() == "true":
                             streamer.send_event(
                             "Decision Feedback",
-                            {"event_": "DecisionFeedback", "DMFeedback": resp, "dur_DecisionFeedback": dur.Feedback / 1000}
+                            {"event_": "DecisionFeedback", "DMFeedback": response, "dur_DecisionFeedback": dur.Feedback / 1000}
                             )                 
 
-
-                        # Strict post-response period: display tick for AFTER_S seconds, then exit loop
-                        post_resp_end = t_resp + AFTER_S
                         break
 
         core.wait(0.001)
 
-    # --- 4) Record results ---
+    ##################################################################################################
+    # 4) Log response (and response time if response was expressed)
+    ##################################################################################################
     if decision_made:
-        # DecisionTime = time from DM onset to keypress (seconds)
-        trials.at[i, 'DecisionTime'] = t_resp
-        trials.at[i, 'Acceptance']   = resp
+        trials.at[i, 'DecisionTime'] = decision_time
+        trials.at[i, 'Acceptance']   = response
     else:
         trials.at[i, 'DecisionTime'] = np.nan
         trials.at[i, 'Acceptance']   = -1

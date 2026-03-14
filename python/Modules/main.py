@@ -15,12 +15,12 @@ from effort import effort_phase, init_cursor_matrix
 from ws_utils import trial_row_payload
 from keyboard import init_keyboard, poll_keys, clear_events, QuitSignal
 from ws_stream import TrialStreamer
-from utils import ParallelTrigger
 import logging
 import traceback
 import tempfile
 import shutil
 import sys
+from trigger_and_logs_manager import TriggerCodes, init_triggers
 
 # --- Helper: wait while still catching ESC (polling) ---
 def wait_with_escape(seconds, kb, io):
@@ -147,6 +147,10 @@ if __name__ == "__main__":
 
         streamer.start()
 
+
+    # Triggers initialization (HERE I WILL NEED TO DEFINE WHICH TRIGGERS ARE SENT!! EYELINK, MRI, WEBSOCKET, ETC.)
+    triggers = init_triggers(cfg)
+
     # --- PsychoPy window ---
     mon = monitors.Monitor('MyMonitor')
     if cfg.fullscreen == 'Y':
@@ -168,35 +172,28 @@ if __name__ == "__main__":
     CURSOR, nFrames = init_cursor_matrix(dur.Task, Hz, cfg.nTrials)
     keypr = np.full((nFrames, cfg.nTrials), np.nan, dtype=float)
 
+
+    # Waiting for start (either MRI trigger or manual start, keypress 5)
+    for elem in screens.bWaitingStart:
+        elem.draw()
+    win.flip()
+
+    while True:
+        _ = kb.getKeys(clear=False)  # refresh kb.state
+        pressed = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
+
+        if pressed == MRI_trigger_key:
+            print('Keypress 5 detected')
+
+            if triggers is not None: # If keypress 5 was detected, send out TI trigger 
+                triggers.send(TriggerCodes.TI)
+            break
+
     # --- Start block (fixation) ---
-    if cfg.experiment != Expe.MRI:
-
-        for elem in screens.bRectCross:
-            elem.draw()
-        win.flip()
-        wait_with_escape(dur.StartBlock / 1000.0, kb, io)
-
-    else: # MRI waiting mode
-        # Put the task in waiting mode
-
-        for elem in screens.bWaitingMRI:
-            elem.draw()
-
-        win.flip()
-
-        while True:
-            _ = kb.getKeys(clear=False)  # refresh kb.state
-            pressed = {k for k, pressed in getattr(kb, "state", {}).items() if pressed}
-
-            if pressed == MRI_trigger_key:
-                print('MRI key pressed')
-
-                # If the MRI_trigger_key was detected, send out TI trigger (TTL pulse through the parallel port)
-                TItrig = ParallelTrigger(address=0x7FF0)
-                TItrig.send(1)
-
-                break
-
+    for elem in screens.bRectCross:
+        elem.draw()
+    win.flip()
+    wait_with_escape(dur.StartBlock / 1000.0, kb, io)
 
 
     TotalGain = None
@@ -204,41 +201,23 @@ if __name__ == "__main__":
 
     try:
         for i in range(cfg.nTrials):
-            # --- Send current trial subset (compact payload) ---
-            trial_dict = trials.loc[i].to_dict()
-            rec.add_trial(trial_dict)
-            # include = ["trial", "efftested", "rewtested"]
-            # payload = trial_row_payload(trials, i, include, drop_none=True)
-
-            # if streamer is not None:
-            #     print("streamer is not None!!!")
-            #     streamer.send_event("trial_record", payload)
-
-
-            # --- Inter-trial cross ---
-            for elem in screens.bRectCross:
-                elem.draw()
-            win.flip()
-
+        
 
             # --- Constant durations to server (small JSON) ---
-            if streamer is not None:
-                streamer.send_event(
-                "Intertrial interval sent",
-                {"event_": "ITI", "DurITI": (trials.ITI[i] / 1000)} 
-                )
+            # if streamer is not None:
+            #     streamer.send_event(
+            #     "Intertrial interval sent",
+            #     {"event_": "ITI", "DurITI": (trials.ITI[i] / 1000)} 
+            #     )
    
 
-            wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
-
-
             # --- Decision phase ---
-            print("Entering decision phase")
-            decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, TaskTimings, flag_MapYesAtRight, cfg)
-            print("Exiting decision phase")
+            decision_phase(streamer, i, win, screens, kb, io, expClock, dur, trials, triggers, flag_MapYesAtRight, cfg)
+
 
             # --- Effort phase (only when scheduled and accepted) ---
             if i in indx_effort_trials and trials.loc[i, 'Acceptance'] == 1:
+                print("Entered EP phase")
                 effort_phase(
                     streamer=streamer,
                     i=i,
@@ -253,12 +232,14 @@ if __name__ == "__main__":
                     trials=trials,
                     CURSOR=CURSOR,
                     TaskTimings=TaskTimings,
+                    triggers=triggers,
                     keypr=keypr,
                     cfg=cfg,  # <-- explicitly pass cfg here
                     task = Task.EBDM,
                     flag_MultipleKeyPressed=flag_MultipleKeyPressed,
                     KEYBOARD_MODE=True,
                 )
+
 
             # --- Constant durations to server (small JSON) ---
             if streamer is not None:
@@ -272,12 +253,36 @@ if __name__ == "__main__":
                 "End of the trial",
                 {"event_": "EndOfTrial"}
                 )
+
+            if trials.loc[i, 'Anticipation_EP'] == 0:
+
+
+                # Extended intertrial interval 
+                for elem in screens.bRectCross:
+                    elem.draw()
+                win.flip()
+
+                ##### Send out triggers
+                if triggers is not None:  
+                    triggers.send(TriggerCodes.ITI)
+
+                wait_with_escape((trials.ITI[i]+dur.TimeForPupilBaselineBack) / 1000.0, kb, io)
+
+            else:
+                for elem in screens.bRectCross:
+                    elem.draw()
+                win.flip()
+
+                ##### Send out triggers
+                if triggers is not None:  
+                    triggers.send(TriggerCodes.ITI)
+
+                wait_with_escape(trials.ITI[i] / 1000.0, kb, io)
                 
 
             # --- Record enriched trial row (Hz, MTF) ---
             trial_dict = trials.loc[i].to_dict()
             trial_dict.update({"Hz": Hz, "MTF": MTF, "mode": cfg.mode})
-            print("before potential error")
             trial_dict.update({f"dur_{k}": v for k, v in asdict(dur).items()})
             rec.add_trial(trial_dict)
 
@@ -317,6 +322,13 @@ if __name__ == "__main__":
         # Always close streamer and save data
         if streamer is not None:
             streamer.close()
+
+        if triggers is not None:
+            triggers.close()
+            trigger_log_df = triggers.get_log_dataframe()
+            trigger_log_file = os.path.join(cfg.output_dir, f"{prefix}_triggers.csv")
+            trigger_log_df.to_csv(trigger_log_file, index=False)
+
         save_and_quit(
             win=win,
             rec=rec,
